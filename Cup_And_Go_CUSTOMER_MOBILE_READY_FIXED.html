@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Cup And Go - VisionOS Glass App</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+    
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- Premium Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Inter:wght@400;700;900&family=VT323&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --brand-bg: #1A050A; 
+            --orange: #E5C158; 
+            --bg-gradient: radial-gradient(circle at top left, #3A0D15 0%, #110205 100%);
+            
+            /* WHITE GLASS EFFECT */
+            --glass-bg: rgba(255, 255, 255, 0.08); 
+            --glass-border-light: rgba(255, 255, 255, 0.35);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(25px);
+            
+            --text: #FFFFFF; 
+            --muted: rgba(255, 255, 255, 0.6); 
+            --shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        body { font-family: 'Cairo', 'Inter', sans-serif; background: var(--bg-gradient); background-attachment: fixed; color: var(--text); margin: 0; padding: 0; padding-bottom: 90px; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        
+        /* SPLASH INTRO */
+        #splash-screen { position: fixed; inset: 0; background: var(--brand-bg); z-index: 9999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; text-align: center; }
+        .splash-logo { font-size: 80px; animation: bounce 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite alternate; margin-bottom: 10px; }
+        .splash-title { color: var(--orange); font-weight: 900; font-size: 32px; letter-spacing: 2px; margin: 0; }
+        .dev-name-splash { position: absolute; bottom: 15px; font-size: 8px; color: rgba(255,255,255,0.25); letter-spacing: 0.5px; font-weight: normal; font-family: sans-serif; }
+        @keyframes bounce { 0% { transform: scale(0.9) translateY(0); } 100% { transform: scale(1.1) translateY(-10px); } }
+
+        /* Welcome & Alert Toast */
+        .welcome-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.95); color: #000; padding: 10px 25px; border-radius: 30px; font-weight: 900; font-size: 13px; z-index: 100000; box-shadow: 0 5px 20px rgba(0,0,0,0.5); transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap; border: 1px solid var(--glass-border-light); }
+        .welcome-toast.show { top: 20px; }
+
+        /* 🆕 CLEAN HEADER */
+        .header { padding: 20px 15px 15px; display: flex; justify-content: space-between; align-items: flex-start; background: rgba(255,255,255,0.03); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-bottom: 1px solid var(--glass-border); border-radius: 0 0 25px 25px; position: sticky; top: 0; z-index: 1000; box-shadow: var(--shadow); }
+        .header-left { display: flex; align-items: center; gap: 12px; max-width: 60%; }
+        .shop-logo { width: 45px; height: 45px; border-radius: 12px; border: 1.5px solid var(--glass-border-light); object-fit: cover; background: rgba(255,255,255,0.1); flex-shrink: 0; }
+        .shop-title { font-size: 20px; font-weight: 900; color: var(--orange); margin: 0; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Inter', sans-serif; }
+        
+        /* 🆕 Dynamic Greeting Msg (Bigger) */
+        .greeting-msg { font-size: 11px; color: #fff; font-weight: 800; display: block; margin-top: 3px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+
+        .header-actions { display: flex; gap: 8px; align-items: flex-start; flex-shrink: 0; }
+        .nav-icon-btn { background: var(--glass-bg); border: 1px solid var(--glass-border-light); color: var(--text); padding: 5px 10px; border-radius: 12px; font-size: 14px; cursor: pointer; position: relative; backdrop-filter: blur(10px); transition: 0.2s; height: 32px; display: flex; align-items: center; justify-content: center; }
+        .lang-container { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .lang-btn { background: var(--glass-bg); border: 1px solid var(--glass-border-light); color: var(--orange); padding: 5px 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 11px; backdrop-filter: blur(10px); transition: 0.2s; font-family: 'Inter', sans-serif; height: 32px; display: flex; align-items: center; justify-content: center; }
+        .nav-icon-btn:active, .lang-btn:active { background: rgba(255,255,255,0.2); }
+        .notif-badge { position: absolute; top: -5px; right: -5px; background: #FF3B30; color: #fff; font-size: 9px; padding: 2px 5px; border-radius: 10px; font-weight: bold; border: 1px solid #fff; }
+        
+        /* 🆕 Clock Under Language */
+        .live-clock { font-size: 9px; color: var(--muted); font-weight: 700; font-family: 'Inter', monospace; }
+
+        /* SEARCH BAR */
+        .search-container { padding: 20px 15px 15px; }
+        .search-box { width: 100%; background: rgba(0,0,0,0.2); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border-light); padding: 12px 20px; border-radius: 15px; color: #fff; font-size: 14px; box-sizing: border-box; outline: none; transition: 0.2s; }
+        .search-box:focus { border-color: var(--orange); background: rgba(0,0,0,0.4); }
+        .search-box::placeholder { color: var(--muted); }
+
+        /* DOT-MATRIX LED SIGNBOARD */
+        .led-matrix-container { background: #050505; border-radius: 12px; border: 2px solid #222; box-shadow: 0 5px 15px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.8); position: relative; overflow: hidden; margin: 0 15px 15px; padding: 10px; }
+        .dot-matrix-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: radial-gradient(circle at 3px 3px, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 8px 8px; pointer-events: none; z-index: 2; }
+        .led-scroll { white-space: nowrap; animation: scrollLeft 15s linear infinite; display: inline-block; position: relative; z-index: 1; }
+        .led-text { font-family: 'VT323', 'Courier New', monospace; font-size: 24px; color: #ffd700; letter-spacing: 4px; font-weight: 400; text-shadow: 0 0 8px currentColor, 0 0 20px currentColor; }
+        @keyframes scrollLeft { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+        /* AUTO SLIDER BANNER */
+        .slider-container { margin: 0 15px 20px; border-radius: 15px; overflow: hidden; position: relative; height: 160px; border: 1px solid var(--glass-border-light); box-shadow: var(--shadow); display: none; background: rgba(0,0,0,0.5); backdrop-filter: var(--glass-blur); }
+        .slider-track { display: flex; width: 100%; height: 100%; transition: transform 0.5s ease; }
+        .slide { min-width: 100%; height: 100%; position: relative; }
+        .slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .slider-dots { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; z-index: 10; background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 10px; backdrop-filter: blur(5px); }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.4); transition: 0.3s; }
+        .dot.active { background: var(--orange); width: 16px; border-radius: 4px; }
+        html[dir="rtl"] .slider-dots { right: 50%; left: auto; transform: translateX(50%); }
+
+        /* CATEGORY GRID */
+        .home-cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 0 15px 20px; }
+        .home-cat-box { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border-light); border-radius: 15px; padding: 12px 5px; text-align: center; cursor: pointer; transition: 0.2s; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80px; }
+        .home-cat-box:active { transform: scale(0.95); background: rgba(255,255,255,0.15); }
+        .home-cat-icon { font-size: 26px; margin-bottom: 5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .home-cat-title { font-size: 9px; font-weight: 700; color: #fff; line-height: 1.2; text-shadow: 0 1px 3px rgba(0,0,0,0.8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; width: 100%; word-break: break-word; }
+
+        /* QR CODE */
+        .qr-section { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border-light); border-radius: 20px; margin: 0 15px 20px; padding: 20px; text-align: center; box-shadow: var(--shadow); }
+        .qr-title { font-size: 14px; font-weight: 900; color: var(--orange); margin-bottom: 5px; }
+        .qr-sub { font-size: 10px; color: var(--muted); margin-bottom: 15px; }
+        #qrcode { display: flex; justify-content: center; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 12px; width: max-content; margin: 0 auto; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+
+        /* TABS */
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .cat-slider { display: flex; gap: 8px; overflow-x: auto; padding: 0 15px 15px; scrollbar-width: none; }
+        .cat-slider::-webkit-scrollbar { display: none; }
+        .cat-chip { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border-light); padding: 8px 18px; border-radius: 20px; white-space: nowrap; font-size: 12px; font-weight: 700; color: #fff; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .cat-chip.active { background: var(--orange); color: #000; border-color: var(--orange); box-shadow: 0 5px 15px rgba(229,193,88,0.4); }
+
+        /* ITEM CARDS */
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 15px 15px; }
+        .item-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border-light); border-radius: 16px; text-align: left; position: relative; overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow); transition: 0.2s; }
+        html[dir="rtl"] .item-card { text-align: right; }
+        .item-card:active { transform: scale(0.97); }
+        .bestseller-badge { position: absolute; top: 8px; left: 8px; background: rgba(255,59,48,0.9); backdrop-filter: blur(5px); color: #fff; font-size: 9px; font-weight: 900; padding: 3px 8px; border-radius: 8px; z-index: 2; border: 1px solid rgba(255,255,255,0.3); }
+        html[dir="rtl"] .bestseller-badge { left: auto; right: 8px; }
+        .item-img { width: 100%; height: 120px; background: rgba(0,0,0,0.2); object-fit: cover; }
+        .item-icon-fallback { width: 100%; height: 120px; display: flex; align-items: center; justify-content: center; font-size: 40px; background: rgba(0,0,0,0.2); }
+        .item-info { padding: 10px; display: flex; flex-direction: column; flex: 1; justify-content: space-between; }
+        .item-name { font-size: 12px; font-weight: 700; color: #fff; margin: 0 0 6px 0; line-height: 1.3; }
+        .item-bottom { display: flex; justify-content: space-between; align-items: center; }
+        .item-price { color: var(--orange); font-weight: 900; font-size: 13px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        .btn-add { background: rgba(255,255,255,0.15); border: 1px solid var(--glass-border-light); color: #fff; padding: 5px 12px; border-radius: 10px; font-weight: 900; font-size: 11px; cursor: pointer; backdrop-filter: blur(5px); transition: 0.2s; font-family: 'Inter', sans-serif;}
+        .btn-add:active { background: rgba(255,255,255,0.3); }
+
+        /* FLOATING BOTTOM DOCK */
+        .bottom-nav { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid var(--glass-border-light); display: flex; justify-content: space-around; align-items: center; padding: 8px 5px; z-index: 1000; box-shadow: 0 15px 35px rgba(0,0,0,0.8); border-radius: 30px; height: 60px; }
+        .nav-item { background: none; border: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; width: 25%; position: relative; height: 100%; font-family: 'Inter', sans-serif;}
+        html[dir="rtl"] .nav-item { font-family: 'Cairo', sans-serif; }
+        .nav-item i { font-size: 20px; font-style: normal; transition: 0.3s; }
+        .nav-item.active { color: var(--orange); text-shadow: 0 0 10px rgba(229,193,88,0.5); }
+        .nav-item.active i { transform: translateY(-3px) scale(1.1); }
+        
+        .nav-item-cup { position: absolute; top: -30px; background: linear-gradient(135deg, var(--orange), #B89730); color: var(--brand-bg); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; border: 4px solid #1A050A; box-shadow: 0 10px 20px rgba(229,193,88,0.4); transition: 0.2s; }
+        .nav-item-cup:active { transform: scale(0.9); }
+        .cart-nav-badge { position: absolute; top: -5px; right: 15px; background: #FF3B30; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 10px; display: none; border: 1px solid #fff; font-weight: 900; }
+
+        /* ABOUT PAGE */
+        .about-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border-light); padding: 30px 20px; border-radius: 20px; text-align: center; margin-bottom: 15px; box-shadow: var(--shadow); }
+        .about-desc { font-size: 12px; color: var(--muted); line-height: 1.6; margin: 15px 0; }
+        .wa-btn { background: rgba(37, 211, 102, 0.15); border: 1px solid #25D366; color: #25D366; padding: 10px 20px; border-radius: 12px; font-weight: bold; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; width: auto; backdrop-filter: blur(5px); }
+        .dev-badge { background: rgba(255,255,255,0.05); color: var(--muted); padding: 8px 15px; border-radius: 10px; font-size: 10px; display: inline-block; margin-top: 30px; border: 1px solid var(--glass-border); letter-spacing: 0.5px; font-family: 'Inter', sans-serif; }
+
+        /* FAST BOTTOM SHEET */
+        .bottom-sheet-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 99998; opacity: 0; transition: opacity 0.3s ease; cursor: pointer; }
+        .bottom-sheet { position: fixed; bottom: -100%; left: 0; right: 0; background: rgba(30, 10, 15, 0.6); backdrop-filter: blur(35px); border-top: 1px solid var(--glass-border-light); border-radius: 30px 30px 0 0; z-index: 99999; padding: 25px 20px; transition: bottom 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 -15px 50px rgba(0,0,0,0.9); max-height: 85vh; overflow-y: auto; text-align: left;}
+        html[dir="rtl"] .bottom-sheet { text-align: right; }
+        .bottom-sheet.open { bottom: 0; }
+        .close-sheet-btn { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid var(--glass-border-light); color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; z-index: 10; transition: 0.2s; }
+        .close-sheet-btn:active { background: rgba(255,255,255,0.3); }
+        html[dir="rtl"] .close-sheet-btn { right: auto; left: 15px; }
+        
+        .sheet-handle { width: 40px; height: 5px; background: rgba(255,255,255,0.4); border-radius: 5px; margin: -10px auto 20px; }
+        .sheet-title { font-size: 20px; color: var(--orange); font-weight: 900; margin: 0 0 5px; padding-right: 40px; }
+        html[dir="rtl"] .sheet-title { padding-right: 0; padding-left: 40px; }
+        .sheet-price { font-size: 16px; font-weight: 900; color: #fff; margin-bottom: 20px; font-family: 'Inter', sans-serif;}
+        
+        .custom-label { font-size: 11px; color: var(--orange); font-weight: bold; margin-bottom: 10px; display: block; text-transform: uppercase; letter-spacing: 1px; }
+        .quick-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .tag-btn { background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border-light); color: #fff; padding: 8px 15px; border-radius: 15px; font-size: 12px; cursor: pointer; transition: 0.2s; backdrop-filter: blur(5px); }
+        .tag-btn.selected { background: var(--orange); color: #000; border-color: var(--orange); font-weight: 900; box-shadow: 0 4px 10px rgba(229,193,88,0.4); }
+        .note-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border-light); color: #fff; padding: 12px; border-radius: 12px; font-family: inherit; font-size: 13px; margin-bottom: 20px; box-sizing: border-box; outline: none; transition: 0.2s; }
+        .note-input:focus { border-color: var(--orange); background: rgba(0,0,0,0.5); }
+        
+        .qty-controls { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 15px; border: 1px solid var(--glass-border); }
+        .qty-btn { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border-light); color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; font-family: 'Inter', sans-serif;}
+        .qty-btn:active { background: rgba(255,255,255,0.3); transform: scale(0.9); }
+        .btn-confirm-add { background: linear-gradient(135deg, var(--orange), #B89730); color: #000; width: 100%; padding: 16px; border: none; border-radius: 15px; font-weight: 900; font-size: 15px; cursor: pointer; box-shadow: 0 8px 20px rgba(229,193,88,0.4); font-family: 'Inter', 'Cairo', sans-serif;}
+
+        /* MODALS */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); z-index: 100000; justify-content: center; align-items: center; padding: 15px; opacity: 0; transition: opacity 0.3s; }
+        .modal-box { background: rgba(30, 10, 15, 0.65); backdrop-filter: blur(35px); border: 1px solid var(--glass-border-light); border-radius: 25px; width: 100%; max-width: 360px; padding: 25px 20px; max-height: 85vh; overflow-y: auto; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.9); transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .modal.open { opacity: 1; }
+        .modal.open .modal-box { transform: scale(1); }
+        
+        .input-field { width: 100%; padding: 14px; border-radius: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border-light); color: #fff; margin-bottom: 12px; box-sizing: border-box; font-size: 13px; font-family: inherit; outline: none; transition: 0.2s; }
+        .input-field:focus { border-color: var(--orange); background: rgba(0,0,0,0.5); }
+
+        .cart-item { border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 8px; margin-bottom: 8px; text-align: left;}
+        html[dir="rtl"] .cart-item { text-align: right;}
+        .cart-item-note { font-size: 10px; color: var(--orange); margin-top: 3px; }
+        .order-card { background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border-light); padding: 12px; border-radius: 15px; margin-bottom: 12px; position: relative; box-shadow: inset 0 0 10px rgba(255,255,255,0.02); text-align: left;}
+        html[dir="rtl"] .order-card { text-align: right;}
+        .btn-cancel-timer { background: rgba(255,59,48,0.15); border: 1px solid rgba(255,59,48,0.5); color: #FF3B30; padding: 6px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; margin-top: 8px; width: 100%; text-align: center; backdrop-filter: blur(5px); }
+        .cat-heading { grid-column: span 2; margin-top: 15px; margin-bottom: 5px; border-bottom: 1px dashed var(--glass-border-light); padding-bottom: 5px; color: var(--orange); font-size: 16px; font-weight: 900; text-transform: uppercase; text-align: left;}
+        html[dir="rtl"] .cat-heading { text-align: right;}
+
+        .saved-profile-card { background: rgba(255,255,255,0.08); border: 1px solid var(--orange); border-radius: 15px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: inset 0 0 15px rgba(229,193,88,0.1); text-align: left;}
+        html[dir="rtl"] .saved-profile-card { text-align: right;}
+        .btn-edit-profile { background: rgba(255,255,255,0.15); border: 1px solid var(--glass-border-light); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 11px; cursor: pointer; backdrop-filter: blur(5px); font-family: inherit;}
+
+        /* BIG PROMOS & ALERTS */
+        .timer-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; margin: 20px 0; border: 1px solid var(--glass-border-light); box-shadow: inset 0 0 15px rgba(0,0,0,0.5); }
+        .ready-popup { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(15px); z-index: 9999999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.4s; }
+        .ready-popup.show { opacity: 1; pointer-events: auto; }
+        .ready-box { background: rgba(0, 230, 118, 0.15); border: 1px solid rgba(0, 230, 118, 0.5); border-radius: 30px; padding: 35px 25px; text-align: center; width: 85%; max-width: 340px; box-shadow: 0 15px 40px rgba(0,230,118,0.2); transform: scale(0.8); transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .ready-popup.show .ready-box { transform: scale(1); }
+        .ready-bell { font-size: 70px; animation: shake 0.5s infinite alternate; margin-bottom: 20px; filter: drop-shadow(0 0 20px rgba(0,230,118,0.5)); }
+    </style>
+
+<style id="mobile-compat-patch">
+html,body{min-height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);padding-bottom:calc(90px + env(safe-area-inset-bottom));}
+button{touch-action:manipulation;}
+input,select,textarea{max-width:100%;}
+@supports (-webkit-touch-callout:none){input,select,textarea{font-size:16px;}}
+.modal-box,.bottom-sheet,#notifArea,#pastOrdersArea,#checkoutList{-webkit-overflow-scrolling:touch;}
+@supports not (backdrop-filter:blur(1px)){
+  .modal-box,.bottom-sheet,.item-card,.slider-container{background:rgba(30,10,15,.96)!important;}
+}
+</style>
+
+</head>
+<body>
+
+    <!-- SPLASH INTRO -->
+    <div id="splash-screen">
+        <div class="splash-logo">☕</div>
+        <h1 class="splash-title">Cup And Go</h1>
+        <div class="dev-name-splash">Developed by Mohammed Ashik</div>
+    </div>
+
+    <!-- BIG WELCOME PROMO -->
+    <div class="modal" id="welcomePromoModal" onclick="closeModalOverlay(event, 'welcomePromoModal')">
+        <div class="modal-box" onclick="event.stopPropagation()" style="text-align:center; padding: 35px 20px;">
+            <div style="font-size:50px; margin-bottom:10px; filter: drop-shadow(0 0 15px rgba(229,193,88,0.5));">🎉</div>
+            <h2 style="color:var(--orange); margin:0 0 10px; font-weight:900; font-size:22px;" id="promoTitle">Welcome</h2>
+            <p style="color:var(--text); font-size:13px; line-height:1.6; margin-bottom: 25px;" id="promoDesc">Thank you for visiting us!</p>
+            <button class="btn-confirm-add" onclick="closeModal('welcomePromoModal')" id="btnPromoCont">Continue</button>
+        </div>
+    </div>
+
+    <!-- ORDER SUCCESS & TIMER POPUP -->
+    <div class="modal" id="orderSuccessModal" onclick="closeModalOverlay(event, 'orderSuccessModal')">
+        <div class="modal-box" onclick="event.stopPropagation()" style="text-align:center; padding: 30px 20px;">
+            <div style="font-size:60px; margin-bottom:5px; filter: drop-shadow(0 0 15px rgba(0,230,118,0.5));">✅</div>
+            <h2 style="color:#00E676; margin:0 0 10px; font-weight:900; font-size:22px;" id="succTitle">Order Received!</h2>
+            <p style="color:var(--text); font-size:12px;" id="succMsg">Your delicious order is being prepared.</p>
+            
+            <div class="timer-box">
+                <div style="font-size:10px; color:var(--orange); text-transform:uppercase; margin-bottom:5px; font-weight:bold; letter-spacing:1px;" id="lblEta">Estimated Wait Time</div>
+                <div style="font-size:40px; font-weight:900; color:#fff; font-family:'VT323', monospace; text-shadow: 0 0 10px rgba(255,255,255,0.4);" id="etaTimer">15:00</div>
+                <div style="font-size:10px; color:var(--muted); margin-top:3px; text-transform:uppercase;" id="lblMin">Minutes</div>
+            </div>
+            <button class="btn-confirm-add" onclick="trackMyOrderNow()" id="btnTrackNow">Track Order</button>
+        </div>
+    </div>
+
+    <!-- READY NOTIFICATION POPUP -->
+    <div class="ready-popup" id="readyPopup">
+        <div class="ready-box">
+            <div class="ready-bell">🔔</div>
+            <h2 style="color:#00E676; font-weight:900; margin:0; font-size:24px;" id="lblReadyAlert">Order Ready!</h2>
+            <p style="color:rgba(255,255,255,0.9); font-size:13px; margin:10px 0 25px;" id="lblReadySub">Please collect your order at the counter.</p>
+            <button style="background:#00E676; color:#000; padding:12px 30px; border:none; border-radius:12px; font-weight:900; font-size:15px; width:100%; cursor:pointer; box-shadow: 0 5px 15px rgba(0,230,118,0.4);" onclick="closeReadyPopup()">Got it!</button>
+        </div>
+    </div>
+
+    <div id="welcomeToast" class="welcome-toast">أهلاً بك ☕ Welcome!</div>
+
+    <!-- 🆕 CLEAN SINGLE-LINE HEADER -->
+    <div class="header">
+        <div class="header-left">
+            <img id="shopLogo" class="shop-logo" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>" alt="Logo">
+            <div style="overflow:hidden;">
+                <h1 class="shop-title" id="shopName">Cup And Go</h1>
+                <!-- Dynamic Greeting Msg -->
+                <div class="greeting-msg" id="greetingMsg">Good Morning ☀️</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="nav-icon-btn" onclick="openModal('notifModal')" title="Notifications">🔔<span class="notif-badge" id="notifBadge" style="display:none;">0</span></button>
+            <button class="nav-icon-btn" onclick="openModal('ordersModal'); fetchOrderHistory();" title="My Orders">🧾</button>
+            
+            <!-- Language and Clock combined -->
+            <div class="lang-container">
+                <button class="lang-btn" onclick="toggleLanguage()" id="langBtn">English</button>
+                <div class="live-clock" id="liveClock">00:00:00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 1: HOME -->
+    <div id="tab-home" class="tab-content active">
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-box" placeholder="Search..." oninput="handleSearch()">
+        </div>
+
+        <!-- REAL DOT-MATRIX LED -->
+        <div class="led-matrix-container">
+            <div class="dot-matrix-overlay"></div>
+            <div class="led-scroll">
+                <span class="led-text" id="ledText">☕ Welcome to Cup And Go ☕</span>
+            </div>
+        </div>
+
+        <!-- AUTO SLIDER BANNER -->
+        <div class="slider-container" id="sliderContainer">
+            <div class="slider-track" id="sliderTrack"></div>
+            <div class="slider-dots" id="sliderDots"></div>
+        </div>
+
+        <!-- DYNAMIC CATEGORY GRID -->
+        <div class="home-cat-grid" id="homeGridCats"></div>
+
+        <!-- QR CODE -->
+        <div class="qr-section">
+            <div class="qr-title" id="lblQrTitle">Scan Full Menu</div>
+            <div class="qr-sub" id="lblQrSub">Share this QR code with your friends</div>
+            <div id="qrcode"></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: MENU -->
+    <div id="tab-menu" class="tab-content">
+        <div class="cat-slider" id="catSlider"></div>
+        <div class="menu-grid" id="menuGrid">
+            <p style="grid-column: span 2; text-align: center; color: var(--muted); font-size:12px;">Loading...</p>
+        </div>
+    </div>
+
+    <!-- TAB 3: CART -->
+    <div id="tab-cart" class="tab-content">
+        <div style="padding: 0 15px;">
+            <h3 style="color:var(--orange); text-align:center; border-bottom:1px dashed var(--glass-border-light); padding-bottom:10px; margin-top:0;" id="lblYourOrder">Your Order</h3>
+            <div id="checkoutList" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px; font-size:13px; color:#fff;">Cart is empty.</div>
+            
+            <div id="cartFormArea" style="display:none;">
+                <!-- AUTO CHECKOUT PROFILE -->
+                <div id="savedProfileView" style="display:none;">
+                    <div class="saved-profile-card">
+                        <div style="font-size: 12px; color: var(--text); line-height: 1.6;">
+                            <b style="color:#fff; font-size:15px;" id="dispName">Name</b><br>
+                            📞 <span id="dispPhone" style="font-family:'Inter',sans-serif;">Phone</span><br>
+                            🚗 <span id="dispCar" style="color:var(--orange);">Car</span>
+                        </div>
+                        <button class="btn-edit-profile" onclick="editProfileUI()" id="lblEditProfile">Edit</button>
+                    </div>
+                </div>
+
+                <!-- MANUAL PROFILE -->
+                <div id="manualProfileView">
+                    <input type="text" id="custName" class="input-field" placeholder="Your Name" required>
+                    <input type="tel" id="custPhone" class="input-field" placeholder="Mobile Number" required>
+                    <input type="text" id="carNumber" class="input-field" placeholder="Car Number (Optional)">
+                </div>
+
+                <button class="btn-confirm-add" onclick="placeOrder()" id="btnPlaceOrder" style="margin-top:10px;">Confirm Order</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: ABOUT -->
+    <div id="tab-about" class="tab-content">
+        <div style="padding: 0 15px;">
+            <div class="about-card">
+                <img id="aboutLogo" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>" style="width:70px; height:70px; border-radius:15px; margin-bottom:10px; border: 1px solid var(--glass-border-light);">
+                <h2 style="color:var(--orange); margin:0; font-size:22px;" id="aboutShopName">Cup And Go</h2>
+                <p style="color:var(--text); font-size:11px; margin:5px 0 10px;" id="aboutLocation">📍 Hafar Al Batin, Saudi Arabia</p>
+                <p class="about-desc" id="aboutDesc">Welcome to Cup And Go, where passion meets coffee. We serve the finest blends and freshly baked desserts tailored just for you.</p>
+                <a href="#" id="waLink" target="_blank" class="wa-btn">💬 WhatsApp Us</a><br>
+                <div class="dev-badge">💻 Developed by Mohammed Ashik</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING BOTTOM DOCK -->
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('home', this)"><i>🏠</i><span id="navHome">Home</span></button>
+        <button class="nav-item" onclick="switchTab('menu', this)" style="align-items: center; justify-content: center;">
+            <div class="nav-item-cup">☕</div>
+        </button>
+        <button class="nav-item" onclick="switchTab('cart', this)">
+            <i style="position:relative;">🛒<span class="cart-nav-badge" id="cartNavBadge">0</span></i>
+            <span id="navCart">Cart</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('about', this)"><i>ℹ️</i><span id="navAbout">About</span></button>
+    </div>
+
+    <!-- FAST BOTTOM SHEET -->
+    <div class="bottom-sheet-overlay" id="sheetOverlay" onclick="closeItemSheet()"></div>
+    <div class="bottom-sheet" id="itemSheet">
+        <button class="close-sheet-btn" onclick="closeItemSheet()">✕</button>
+        <div class="sheet-handle"></div>
+        <h2 class="sheet-title" id="sheetItemName">Item Name</h2>
+        <div class="sheet-price"><span id="sheetItemPrice">0</span> SR</div>
+
+        <span class="custom-label" id="lblPreferences">Quick Preferences</span>
+        <div class="quick-tags">
+            <!-- 🆕 Cleaned Tags (No Less Sugar / Extra Shot) -->
+            <div class="tag-btn" onclick="toggleTag(this)" id="tagIce">Extra Ice</div>
+            <div class="tag-btn" onclick="toggleTag(this)" id="tagHot">Hot 🔥</div>
+            <div class="tag-btn" onclick="toggleTag(this)" id="tagCold">Cold 🧊</div>
+        </div>
+
+        <span class="custom-label" id="lblSpecialNote">Special Instructions</span>
+        <input type="text" class="note-input" id="sheetSpecialNote" placeholder="e.g. Extra hot...">
+
+        <div class="qty-controls">
+            <div class="qty-btn" onclick="changeSheetQty(-1)">-</div>
+            <strong style="font-size:24px; color:#fff; font-family:'Inter',sans-serif;" id="sheetQty">1</strong>
+            <div class="qty-btn" onclick="changeSheetQty(1)">+</div>
+        </div>
+
+        <button class="btn-confirm-add" onclick="confirmAddToCart()" id="btnAddFinal">Add to Cart - <span id="sheetTotalPrice">0</span> SR</button>
+    </div>
+
+    <!-- MODALS: ORDERS & NOTIFS -->
+    <div class="modal" id="ordersModal" onclick="closeModalOverlay(event, 'ordersModal')">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <button class="close-sheet-btn" style="top:15px; right:15px;" onclick="closeModal('ordersModal')">✕</button>
+            <h3 style="color:var(--orange); text-align:center; margin:0 0 15px 0; font-size:18px;" id="lblMyOrders">My Orders</h3>
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <input type="tel" id="trackPhone" class="input-field" placeholder="Mobile Number" style="margin:0;">
+                <button class="btn-confirm-add" style="width:auto; padding:0 20px; font-size:16px;" onclick="fetchOrderHistory()">🔍</button>
+            </div>
+            <div id="liveTrackingArea" style="margin-bottom:15px;"></div>
+            <h4 style="color:#fff; border-bottom:1px dashed var(--glass-border-light); padding-bottom:5px; margin:0 0 10px;" id="lblHistory">History</h4>
+            <div id="pastOrdersArea" style="max-height: 200px; overflow-y: auto; font-size:12px;"><p style="color:var(--muted); text-align:center;">Search past orders.</p></div>
+        </div>
+    </div>
+
+    <div class="modal" id="notifModal" onclick="closeModalOverlay(event, 'notifModal')">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <button class="close-sheet-btn" style="top:15px; right:15px;" onclick="closeModal('notifModal')">✕</button>
+            <h3 style="color:var(--orange); text-align:center; margin:0 0 15px 0; font-size:18px;" id="lblNotif">Notifications</h3>
+            <div id="notifArea" style="max-height: 250px; overflow-y: auto; font-size:13px; color:#fff;"><p style="color:var(--muted); text-align:center;">No notifications</p></div>
+        </div>
+    </div>
+
+    <!-- JS LOGIC -->
+    <script>
+        // GLOBAL FUNCTIONS
+        window.openModal = function(id) { let m = document.getElementById(id); m.style.display = 'flex'; if(id === 'notifModal') renderNotifs(); setTimeout(() => m.classList.add('open'), 10); }
+        window.closeModal = function(id) { let m = document.getElementById(id); m.classList.remove('open'); setTimeout(() => m.style.display = 'none', 300); }
+        window.closeModalOverlay = function(e, id) { if(e.target.id === id) window.closeModal(id); }
+
+        const MY_QR_MENU_LINK = "https://sites.google.com/view/cup-and-go-menu/home";
+        const firebaseConfig = { apiKey: "AIzaSyAoYsT80oNc505TgobYwTv0T7YfUF_fWRs", authDomain: "cup-and-go-pos-e0ad1.firebaseapp.com", databaseURL: "https://cup-and-go-pos-e0ad1-default-rtdb.firebaseio.com", projectId: "cup-and-go-pos-e0ad1" };
+        firebase.initializeApp(firebaseConfig); const db = firebase.database();
+
+        let menuProducts = []; let cart = []; let currentItem = null; let sheetQtyVal = 1; 
+        let isArabic = true; 
+        let activeCategory = 'All Items';
+        let sliderImages = []; let currentSlide = 0; let slideIntervalId = null;
+        let countdownTimer = null; const CANCEL_WINDOW_SEC = 60; let etaInterval = null; let adminWaitTimeMin = 15;
+        let myNotifications = JSON.parse(localStorage.getItem('cng_notifs') || '[]'); let adminCategories = [];
+        let initialBannersLoaded = false; let lastBannersStr = "";
+
+        const dict = {
+            en: { shopName: "Cup And Go", allItems: "All Items", addBtn: "+ Add", pref: "Quick Preferences", note: "Special Instructions", phNote: "e.g. Extra hot...", orderTitle: "Your Order", phName: "Your Name", phPhone: "Mobile Number", phCar: "Car Number (Optional)", cancel: "Cancel", confirm: "Confirm Order", myOrders: "My Orders", history: "History", phTrack: "Mobile Number", prep: "Preparing...", comp: "Completed", notifTit: "Notifications", navHome: "Home", navCart: "Cart", navAbout: "About", lblQr: "Scan Full Menu", subQr: "Share this QR with friends", readyTit: "Order Ready!", readySub: "Please collect your order at the counter.", aboutDesc: "Welcome to Cup And Go, where passion meets coffee. We serve the finest blends and freshly baked desserts tailored just for you.", succTit: "Order Received!", succMsg: "Your delicious order is being prepared.", lblEta: "Estimated Wait Time", lblMin: "Minutes", btnTrackNow: "Track Order", tagIce: "Extra Ice", tagHot: "Hot 🔥", tagCold: "Cold 🧊", promoTit: "Welcome", promoDesc: "Thank you for visiting us! Enjoy our finest coffee blends and freshly baked desserts tailored just for you.", btnPromoCont: "Continue" },
+            ar: { shopName: "كوب آند جو", allItems: "الكل", addBtn: "+ إضافة", pref: "خيارات سريعة", note: "ملاحظات خاصة", phNote: "مثال: ساخن جداً...", orderTitle: "طلبك", phName: "الاسم", phPhone: "رقم الجوال", phCar: "رقم السيارة (اختياري)", cancel: "إلغاء", confirm: "تأكيد الطلب", myOrders: "طلباتي", history: "السجل", phTrack: "رقم الجوال", prep: "جاري التحضير...", comp: "مكتمل", notifTit: "الإشعارات", navHome: "الرئيسية", navCart: "السلة", navAbout: "حول", lblQr: "امسح القائمة", subQr: "شارك الكود مع أصدقائك", readyTit: "طلبك جاهز!", readySub: "يرجى استلام طلبك من الكاونتر.", aboutDesc: "مرحباً بك في كوب آند جو، حيث يلتقي الشغف بالقهوة. نقدم لك أفضل الخلطات والحلويات الطازجة المخبوزة خصيصاً لك.", succTit: "تم استلام الطلب!", succMsg: "جاري تحضير طلبك اللذيذ.", lblEta: "الوقت المقدر للانتظار", lblMin: "دقائق", btnTrackNow: "تتبع الطلب", tagIce: "زيادة ثلج", tagHot: "ساخن 🔥", tagCold: "بارد 🧊", promoTit: "مرحباً بك", promoDesc: "شكراً لزيارتك! استمتع بأفضل خلطات القهوة والحلويات المخبوزة طازجاً.", btnPromoCont: "متابعة" }
+        };
+
+        function playBeep() { try { let ctx = new (window.AudioContext || window.webkitAudioContext)(); let osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = 800; osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.3); } catch(e) {} }
+
+        // Time Greeting
+        function updateGreeting(hour) {
+            let g = document.getElementById('greetingMsg');
+            if(hour >= 5 && hour < 12) g.innerText = isArabic ? "صباح الخير ☀️" : "Good Morning ☀️";
+            else if(hour >= 12 && hour < 17) g.innerText = isArabic ? "مساء الخير 🌤️" : "Good Afternoon 🌤️";
+            else if(hour >= 17 && hour < 21) g.innerText = isArabic ? "مساء النور 🌙" : "Good Evening 🌙";
+            else g.innerText = isArabic ? "طابت ليلتك ☕" : "Have a great night ☕";
+        }
+
+        // Live Clock (Seconds)
+        setInterval(() => { 
+            let d = new Date(); 
+            document.getElementById('liveClock').innerText = d.toLocaleTimeString(isArabic ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); 
+            updateGreeting(d.getHours());
+        }, 1000);
+
+        window.onload = () => {
+            if(isArabic) applyTranslations(); 
+
+            setTimeout(() => { let s = document.getElementById('splash-screen'); s.style.opacity = '0'; setTimeout(() => { s.style.display = 'none'; checkWelcomePromo(); }, 500); }, 2500);
+            new QRCode(document.getElementById("qrcode"), { text: MY_QR_MENU_LINK, width: 130, height: 130, colorDark : "#000000", colorLight : "#ffffff" });
+
+            let savedPhone = localStorage.getItem('cng_phone');
+            if(savedPhone) {
+                document.getElementById('custName').value = localStorage.getItem('cng_name') || ''; document.getElementById('custPhone').value = savedPhone; document.getElementById('carNumber').value = localStorage.getItem('cng_car') || ''; document.getElementById('trackPhone').value = savedPhone;
+                listenForReadyNotification(); 
+                listenForCompletedNotification();
+            }
+            updateNotifBadge(); countdownTimer = setInterval(updateCountdowns, 1000);
+        };
+
+        function checkWelcomePromo() {
+            let seen = sessionStorage.getItem('cng_promo_seen');
+            if(!seen) { window.openModal('welcomePromoModal'); sessionStorage.setItem('cng_promo_seen', 'true'); } 
+            else { showToast(isArabic ? "أهلاً بك في كوب آند جو ☕" : "Welcome to Cup And Go ☕"); }
+        }
+        function showToast(msg) { let t = document.getElementById('welcomeToast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3500); }
+
+        // TABS
+        window.switchTab = function(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.getElementById('tab-' + tabId).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+            if(tabId === 'cart') renderCartTab(); if(tabId === 'menu') filterCategory('All Items', document.querySelector('.cat-chip')); 
+        }
+
+        window.handleSearch = function() {
+            let q = document.getElementById('searchInput').value.toLowerCase();
+            if(q.length > 1) {
+                document.querySelectorAll('.nav-item')[1].click(); 
+                let grid = document.getElementById('menuGrid'); grid.innerHTML = '';
+                let res = menuProducts.filter(p => p.name.toLowerCase().includes(q));
+                if(res.length===0) grid.innerHTML = `<p style="color:var(--muted);grid-column:span 2;text-align:center;">No match.</p>`; else renderProductsToGrid(res, grid);
+            } else if(q.length === 0) { document.querySelectorAll('.nav-item')[0].click(); }
+        }
+
+        // NOTIFS
+        function addNotification(msg) { myNotifications.unshift({ text: msg, time: new Date().toLocaleTimeString(), read: false }); if(myNotifications.length > 10) myNotifications.pop(); localStorage.setItem('cng_notifs', JSON.stringify(myNotifications)); updateNotifBadge(); }
+        function updateNotifBadge() { let unread = myNotifications.filter(n => !n.read).length; let badge = document.getElementById('notifBadge'); if(unread > 0) { badge.style.display = 'block'; badge.innerText = unread; } else badge.style.display = 'none'; }
+        function renderNotifs() { let area = document.getElementById('notifArea'); if(myNotifications.length === 0) { area.innerHTML = `<p style="color:var(--muted);text-align:center;">No notifications</p>`; return; } area.innerHTML = ''; myNotifications.forEach(n => { area.innerHTML += `<div style="padding:12px; border-bottom:1px dashed var(--glass-border-light);"><div style="display:flex;justify-content:space-between;"><span>${n.text}</span></div><span style="font-size:10px;color:var(--muted); margin-top:5px; display:block;">${n.time}</span></div>`; n.read = true; }); localStorage.setItem('cng_notifs', JSON.stringify(myNotifications)); updateNotifBadge(); }
+
+        // FIREBASE
+        // Admin notification listener starts after its state variable/function are initialized.
+
+        db.ref('/settings').on('value', snap => {
+            let s = snap.val();
+            if(s) {
+                if(s.shopLogo) { document.getElementById('shopLogo').src = s.shopLogo; document.getElementById('aboutLogo').src = s.shopLogo; }
+                if(!isArabic && s.shopName) { document.getElementById('shopName').innerText = s.shopName; document.getElementById('aboutShopName').innerText = s.shopName; }
+                if(s.location) document.getElementById('aboutLocation').innerText = "📍 " + s.location;
+                if(s.ownerPhone) document.getElementById('waLink').href = "https://wa.me/" + s.ownerPhone;
+                if(s.categories) adminCategories = s.categories; else adminCategories = [];
+                if(s.waitTime) adminWaitTimeMin = parseInt(s.waitTime);
+                
+                let banners = []; if(s.promoBanners && Array.isArray(s.promoBanners)) banners = s.promoBanners; else if(s.offerPosterImage) banners = [s.offerPosterImage]; 
+                initSlider(banners); 
+                
+                // Alert if new offers added
+                let currentBannersStr = JSON.stringify(banners);
+                if(initialBannersLoaded && currentBannersStr !== lastBannersStr && banners.length > 0) {
+                    showToast(isArabic ? "🎉 عرض جديد متاح!" : "🎉 New Offer Available!");
+                    addNotification(isArabic ? "تفقّد العروض الجديدة في الصفحة الرئيسية!" : "Check out the new offers on the home page!");
+                    playBeep();
+                }
+                lastBannersStr = currentBannersStr; initialBannersLoaded = true;
+                renderCategories(); 
+            }
+        });
+        db.ref('/ledMatrix').on('value', snap => { let led = snap.val(); if(led) { let el = document.getElementById('ledText'); el.innerText = led.text || "☕ Welcome ☕"; el.style.color = led.color || "#ffd700"; } });
+
+        // ADMIN NOTIFICATIONS - REAL TIME
+        let adminNotificationListenerStarted = false;
+        function listenForAdminNotifications(){
+            if(adminNotificationListenerStarted) return; adminNotificationListenerStarted=true;
+            db.ref('/customerNotifications').on('child_added', snap => {
+                const n=snap.val(); if(!n || n.active===false) return;
+                const seen=JSON.parse(localStorage.getItem('cng_admin_notifs_seen')||'[]');
+                const key=String(n.id||snap.key);
+                if(seen.includes(key)) return;
+                seen.push(key); if(seen.length>100)seen.shift(); localStorage.setItem('cng_admin_notifs_seen',JSON.stringify(seen));
+                const text=(n.title? n.title+': ':'')+(n.message||'');
+                addNotification(text);
+                showToast(isArabic ? '🔔 إشعار جديد' : '🔔 New notification');
+                playBeep();
+                if(n.image){
+                    const area=document.getElementById('notifArea');
+                    if(area){ const div=document.createElement('div'); div.style.cssText='padding:12px;border-bottom:1px dashed var(--glass-border-light);'; div.innerHTML=`<b>${n.title||''}</b><div style="margin-top:4px;">${n.message||''}</div><img src="${n.image}" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;margin-top:8px;">`; area.prepend(div); }
+                }
+            });
+        }
+
+        // Safe to start now: adminNotificationListenerStarted has been initialized.
+        listenForAdminNotifications();
+
+        db.ref('/products').on('value', snap => { let data = snap.val(); menuProducts = data ? Object.values(data).filter(p => p != null) : []; renderCategories(); renderMenu(); });
+
+        // SLIDER
+        function initSlider(banners) {
+            let container = document.getElementById('sliderContainer'); let track = document.getElementById('sliderTrack'); let dots = document.getElementById('sliderDots');
+            if (!banners || banners.length === 0) { container.style.display = 'none'; clearInterval(slideIntervalId); return; }
+            sliderImages = banners; container.style.display = 'block'; track.innerHTML = ''; dots.innerHTML = ''; currentSlide = 0;
+            banners.forEach((img, idx) => { track.innerHTML += `<div class="slide"><img src="${img}"></div>`; dots.innerHTML += `<div class="dot ${idx === 0 ? 'active' : ''}"></div>`; });
+            track.style.transform = `translateX(0%)`; clearInterval(slideIntervalId);
+            if (banners.length > 1) { slideIntervalId = setInterval(() => { currentSlide = (currentSlide + 1) % sliderImages.length; track.style.transform = `translateX(${currentSlide * 100 * (isArabic?1:-1)}%)`; document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === currentSlide)); }, 3000); }
+        }
+
+        // CATEGORIES TRANSLATION LOGIC
+        function getCatTranslation(cat) {
+            if(!isArabic) return cat === 'All Items' ? dict.en.allItems : cat;
+            let cLow = cat.toLowerCase();
+            if(cLow === 'all items') return dict.ar.allItems;
+            if(cLow === 'coffee' || cLow.includes('hot')) return 'قهوة';
+            if(cLow === 'sweet' || cLow === 'dessert') return 'حلى';
+            if(cLow === 'cold drinks' || cLow.includes('mojito')) return 'مشروبات باردة';
+            if(cLow === 'coffee box') return 'بوكس القهوة';
+            if(cLow === 'sweet box') return 'بوكس الحلى';
+            if(cLow === 'special offer' || cLow === 'offers') return 'عروض خاصة';
+            return cat; 
+        }
+
+        function renderCategories() {
+            let cats = adminCategories.length > 0 ? adminCategories : ['Coffee', 'Cold Drinks', 'Desserts'];
+            let homeGrid = document.getElementById('homeGridCats'); homeGrid.innerHTML = '';
+            cats.forEach(c => { 
+                let icon = '✨'; let cLow = c.toLowerCase(); 
+                if(cLow.includes('coffee') || cLow.includes('hot')) icon = '☕'; else if(cLow.includes('cold') || cLow.includes('drink') || cLow.includes('mojito')) icon = '🥤'; else if(cLow.includes('dessert') || cLow.includes('sweet') || cLow.includes('cake')) icon = '🍰'; else if(cLow.includes('offer') || cLow.includes('deal')) icon = '🎉'; 
+                let dispName = getCatTranslation(c);
+                homeGrid.innerHTML += `<div class="home-cat-box" data-cat="${c}" onclick="goToMenu('${c}')"><div class="home-cat-icon">${icon}</div><div class="home-cat-title">${dispName}</div></div>`; 
+            });
+            let catSlider = document.getElementById('catSlider'); 
+            let html = `<div class="cat-chip ${activeCategory === 'All Items' ? 'active' : ''}" data-cat="All Items" onclick="filterCategory('All Items', this)">${isArabic ? dict.ar.allItems : dict.en.allItems}</div>`;
+            cats.forEach(c => { let isActive = c === activeCategory ? 'active' : ''; let dispName = getCatTranslation(c); html += `<div class="cat-chip ${isActive}" data-cat="${c}" onclick="filterCategory('${c}', this)">${dispName}</div>`; }); 
+            catSlider.innerHTML = html;
+        }
+
+        window.goToMenu = function(cat) {
+            document.querySelectorAll('.nav-item')[1].click(); 
+            setTimeout(() => { 
+                activeCategory = cat;
+                document.querySelectorAll('.cat-chip').forEach(el => el.classList.remove('active'));
+                let targetChip = document.querySelector(`.cat-chip[data-cat="${cat}"]`);
+                if(targetChip) targetChip.classList.add('active');
+                renderMenu();
+            }, 100); 
+        }
+
+        window.filterCategory = function(cat, element) { 
+            activeCategory = cat; document.querySelectorAll('.cat-chip').forEach(el => el.classList.remove('active')); 
+            if(element) element.classList.add('active'); renderMenu(); 
+        }
+
+        function renderMenu() {
+            let grid = document.getElementById('menuGrid'); grid.innerHTML = '';
+            if(activeCategory === 'All Items') {
+                let catsToRender = adminCategories.length > 0 ? adminCategories : [...new Set(menuProducts.map(p => p.category))]; let hasAnyItems = false;
+                catsToRender.forEach(cat => { 
+                    let catProds = menuProducts.filter(p => p.category === cat); 
+                    if(catProds.length > 0) { 
+                        hasAnyItems = true; let dispName = getCatTranslation(cat);
+                        grid.innerHTML += `<div class="cat-heading">${dispName}</div>`; renderProductsToGrid(catProds, grid); 
+                    } 
+                });
+                if(!hasAnyItems) grid.innerHTML = `<p style="color:var(--muted);grid-column:span 2;text-align:center;">No items found.</p>`;
+            } else { let filtered = menuProducts.filter(p => p.category === activeCategory); if(filtered.length === 0) { grid.innerHTML = `<p style="color:var(--muted);grid-column:span 2;text-align:center;">No items found.</p>`; return; } renderProductsToGrid(filtered, grid); }
+        }
+        function renderProductsToGrid(itemsArray, gridElement) { itemsArray.forEach((p, index) => { let iconHtml = (p.icon && p.icon.length > 15) ? `<img src="${p.icon}" class="item-img">` : `<div class="item-icon-fallback">${p.icon || '☕'}</div>`; gridElement.innerHTML += `<div class="item-card">${iconHtml}<div class="item-info"><div class="item-name">${p.name}</div><div class="item-bottom"><div class="item-price">${p.price} SR</div><button class="btn-add" onclick="openItemOptions(${p.id})">${dict[isArabic?'ar':'en'].addBtn}</button></div></div></div>`; }); }
+
+        // BOTTOM SHEET
+        window.openItemOptions = function(id) { currentItem = menuProducts.find(p => p.id === id); if(!currentItem) return; sheetQtyVal = 1; document.getElementById('sheetItemName').innerText = currentItem.name; document.getElementById('sheetItemPrice').innerText = currentItem.price; document.getElementById('sheetQty').innerText = sheetQtyVal; document.getElementById('sheetTotalPrice').innerText = currentItem.price; document.getElementById('sheetSpecialNote').value = ''; document.querySelectorAll('.tag-btn').forEach(btn => btn.classList.remove('selected')); let overlay = document.getElementById('sheetOverlay'); let sheet = document.getElementById('itemSheet'); overlay.style.display = 'block'; setTimeout(() => { overlay.style.opacity = '1'; sheet.classList.add('open'); }, 10); }
+        window.closeItemSheet = function() { let overlay = document.getElementById('sheetOverlay'); document.getElementById('itemSheet').classList.remove('open'); overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); }
+        window.changeSheetQty = function(change) { sheetQtyVal += change; if(sheetQtyVal < 1) sheetQtyVal = 1; document.getElementById('sheetQty').innerText = sheetQtyVal; document.getElementById('sheetTotalPrice').innerText = (currentItem.price * sheetQtyVal).toFixed(2); }
+        window.toggleTag = function(btn) { btn.classList.toggle('selected'); }
+        window.confirmAddToCart = function() { let tags = Array.from(document.querySelectorAll('.tag-btn.selected')).map(b => b.innerText).join(', '); let note = document.getElementById('sheetSpecialNote').value.trim(); let customText = [tags, note].filter(Boolean).join(' | '); let existing = cart.find(c => c.id === currentItem.id && c.note === customText); if(existing) existing.qty += sheetQtyVal; else cart.push({ ...currentItem, qty: sheetQtyVal, note: customText }); updateCartBadge(); closeItemSheet(); showToast(isArabic ? "✅ تمت الإضافة" : "✅ Added"); }
+        function updateCartBadge() { let b = document.getElementById('cartNavBadge'); let totalQty = cart.reduce((s, c) => s + c.qty, 0); if(totalQty > 0) { b.style.display = 'block'; b.innerText = totalQty; } else b.style.display = 'none'; if(document.getElementById('tab-cart').classList.contains('active')) renderCartTab(); }
+
+        // CART & CHECKOUT
+        function renderCartTab() {
+            let list = document.getElementById('checkoutList'); let form = document.getElementById('cartFormArea');
+            if(cart.length === 0) { list.innerHTML = isArabic ? 'السلة فارغة.' : 'Cart is empty.'; form.style.display = 'none'; return; }
+            form.style.display = 'block'; list.innerHTML = ''; let totalAmt = 0;
+            cart.forEach((c, idx) => {
+                totalAmt += c.price * c.qty; let noteHtml = c.note ? `<div style="font-size:11px;color:var(--orange);margin-top:5px;">📝 ${c.note}</div>` : '';
+                list.innerHTML += `<div class="cart-item"><div style="display:flex; justify-content:space-between; align-items:center;"><span><b style="color:var(--orange)">${c.qty}x</b> ${c.name}</span><span><b style="color:var(--orange); font-family:'Inter',sans-serif;">${(c.price * c.qty).toFixed(2)} SR</b> <span onclick="removeCartItem(${idx})" style="color:#FF3B30;cursor:pointer;margin:0 12px;font-size:18px;font-weight:bold;">✖</span></span></div>${noteHtml}</div>`;
+            });
+            list.innerHTML += `<div style="text-align:${isArabic?'left':'right'}; font-size:18px; font-weight:900; color:#00E676; margin-top:15px; font-family:'Inter',sans-serif;">Total: ${totalAmt.toFixed(2)} SR</div>`;
+            
+            let savedPhone = localStorage.getItem('cng_phone');
+            if(savedPhone) { document.getElementById('manualProfileView').style.display = 'none'; document.getElementById('savedProfileView').style.display = 'block'; document.getElementById('dispName').innerText = localStorage.getItem('cng_name') || 'Guest'; document.getElementById('dispPhone').innerText = savedPhone; let car = localStorage.getItem('cng_car'); document.getElementById('dispCar').innerText = car ? "Car: " + car : "Walk-in"; } else { document.getElementById('manualProfileView').style.display = 'block'; document.getElementById('savedProfileView').style.display = 'none'; }
+        }
+        window.removeCartItem = function(idx) { cart.splice(idx, 1); updateCartBadge(); }
+        window.editProfileUI = function() { document.getElementById('savedProfileView').style.display = 'none'; document.getElementById('manualProfileView').style.display = 'block'; }
+
+        // PLACE ORDER WITH TIMER
+        window.placeOrder = function() {
+            let isManual = document.getElementById('manualProfileView').style.display !== 'none'; let name, phone, car;
+            if(isManual) { name = document.getElementById('custName').value.trim(); phone = document.getElementById('custPhone').value.trim(); car = document.getElementById('carNumber').value.trim(); if(!name || !phone) return alert(isArabic ? "الاسم ورقم الجوال مطلوبان!" : "Name and Phone required!"); localStorage.setItem('cng_name', name); localStorage.setItem('cng_phone', phone); if(car) localStorage.setItem('cng_car', car); document.getElementById('trackPhone').value = phone; listenForReadyNotification(); listenForCompletedNotification(); } else { name = localStorage.getItem('cng_name') || 'Guest'; phone = localStorage.getItem('cng_phone'); car = localStorage.getItem('cng_car') || ''; }
+            let btn = document.getElementById('btnPlaceOrder'); btn.innerText = "Processing..."; btn.disabled = true;
+            let total = cart.reduce((s, c) => s + (c.price * c.qty), 0); let cashierInfo = car ? `Car: ${car} (${name})` : `Walk-in: ${name}`; let tNow = Date.now();
+            let orderData = { id: tNow, time: new Date().toLocaleTimeString(), items: cart, total: total, cashier: cashierInfo, customerPhone: phone, carNumber: car || "", timestamp: tNow, status: 'held' };
+            // Atomic realtime append: prevents simultaneous customer orders from overwriting each other.
+            db.ref('/heldOrders').transaction(current => {
+                let held = current || [];
+                if(!Array.isArray(held)) held = Object.values(held);
+                if(!held.some(o => String(o?.id) === String(orderData.id))) held.push(orderData);
+                return held;
+            }).then(result => {
+                if(!result.committed) throw new Error('Order was not committed');
+                cart = []; updateCartBadge(); btn.innerText = dict[isArabic?'ar':'en'].confirm; btn.disabled = false;
+                document.querySelectorAll('.nav-item')[0].click(); 
+                startEtaTimer(adminWaitTimeMin); window.openModal('orderSuccessModal'); addNotification(isArabic ? "تم استلام الطلب!" : "Order placed successfully!");
+            }).catch(e => { alert("Error!"); btn.disabled = false; });
+        }
+
+        function startEtaTimer(minutes) {
+            clearInterval(etaInterval); let targetTime = Date.now() + (minutes * 60000);
+            etaInterval = setInterval(() => {
+                let diff = targetTime - Date.now(); if(diff <= 0) { clearInterval(etaInterval); document.getElementById('etaTimer').innerText = "00:00"; return; }
+                let m = Math.floor(diff / 60000); let s = Math.floor((diff % 60000) / 1000);
+                document.getElementById('etaTimer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            }, 1000);
+        }
+        window.trackMyOrderNow = function() { window.closeModal('orderSuccessModal'); window.openModal('ordersModal'); fetchOrderHistory(); }
+
+        // ORDERS TRACKING & HISTORY
+        window.updateCountdowns = function() {
+            let now = Date.now(); document.querySelectorAll('.btn-cancel-timer').forEach(btn => {
+                let oTime = parseInt(btn.getAttribute('data-time')); let diff = Math.floor((now - oTime) / 1000); let timeLeft = CANCEL_WINDOW_SEC - diff;
+                if (timeLeft > 0) btn.innerHTML = `${isArabic ? 'إلغاء' : 'Cancel'} (${timeLeft}s)`; else btn.style.display = 'none';
+            });
+        }
+        window.cancelMyOrder = function(orderId) {
+            let cmsg = isArabic ? "هل أنت متأكد من الإلغاء؟" : "Are you sure?";
+            if(!confirm(cmsg)) return;
+            db.ref('/heldOrders').transaction(current => {
+                let held = current || []; if(!Array.isArray(held)) held = Object.values(held);
+                return held.filter(o => String(o?.id) !== String(orderId));
+            }).then(() => { showToast(isArabic ? "تم الإلغاء" : "Cancelled!"); addNotification(isArabic ? "تم إلغاء الطلب" : "Order cancelled."); fetchOrderHistory(); });
+        }
+
+        function fetchOrderHistory() {
+            let phone = document.getElementById('trackPhone').value.trim(); if(!phone) return;
+            let liveArea = document.getElementById('liveTrackingArea'); let pastArea = document.getElementById('pastOrdersArea');
+            let tPrep = isArabic ? dict.ar.prep : dict.en.prep;
+
+            db.ref('/heldOrders').on('value', snap => { 
+                let held = snap.val() || []; if(!Array.isArray(held)) held = Object.values(held);
+                let myLive = held.filter(o => o.customerPhone === phone);
+                if(myLive.length === 0) liveArea.innerHTML = '';
+                else {
+                    let html = '';
+                    myLive.forEach(o => {
+                        let isReady = o.status === 'Ready'; let statusTxt = isReady ? (isArabic ? '✅ جاهز' : '✅ Ready') : '⏳ ' + tPrep; let colorTxt = isReady ? '#00E676' : '#FF9F0A';
+                        let diff = Math.floor((Date.now() - o.timestamp) / 1000); let timeLeft = CANCEL_WINDOW_SEC - diff;
+                        let cancelBtnHtml = (!isReady && o.status === 'held' && timeLeft > 0) ? `<button class="btn-cancel-timer" data-time="${o.timestamp}" onclick="cancelMyOrder('${o.id}')">${isArabic ? 'إلغاء' : 'Cancel'} (${timeLeft}s)</button>` : '';
+                        html += `<div class="order-card" style="border-color:${colorTxt};"><div style="display:flex; justify-content:space-between; margin-bottom:5px;"><strong style="color:${colorTxt};">${statusTxt}</strong><b style="color:#fff; font-family:'Inter',sans-serif;">${parseFloat(o.total).toFixed(2)} SR</b></div><div style="font-size:10px; color:var(--muted); font-family:'Inter',sans-serif;">Order #${o.id}</div>${cancelBtnHtml}</div>`;
+                    });
+                    liveArea.innerHTML = html; updateCountdowns();
+                }
+            });
+
+            Promise.all([ db.ref('/orders').once('value'), db.ref('/history').once('value') ]).then(snapshots => {
+                let todayOrds = snapshots[0].val() || []; if(!Array.isArray(todayOrds)) todayOrds = Object.values(todayOrds);
+                let pastHist = snapshots[1].val() || []; if(!Array.isArray(pastHist)) pastHist = Object.values(pastHist);
+                let allCompleted = [...todayOrds]; pastHist.forEach(d => { if(d.ordersData) allCompleted = allCompleted.concat(d.ordersData); });
+                let myPast = allCompleted.filter(o => o.customerPhone === phone).reverse();
+                if(myPast.length === 0) pastArea.innerHTML = `<p style="color:var(--muted); text-align:center;">No past orders.</p>`;
+                else {
+                    let html = '';
+                    myPast.forEach(o => {
+                        let itemsTxt = (o.items || []).map(i => `${i.qty}x ${i.name}`).join(', ');
+                        html += `<div class="order-card"><div style="display:flex; justify-content:space-between; margin-bottom:3px;"><strong style="color:#00E676;">✅ ${isArabic ? dict.ar.comp : dict.en.comp}</strong><b style="color:var(--orange); font-family:'Inter',sans-serif;">${parseFloat(o.total).toFixed(2)} SR</b></div><div style="font-size:11px; color:var(--muted);">${itemsTxt}</div><div style="font-size:9px; color:#888; margin-top:3px; font-family:'Inter',sans-serif;">${o.time || new Date(o.timestamp).toLocaleDateString()}</div></div>`;
+                    });
+                    pastArea.innerHTML = html;
+                }
+            });
+        }
+
+        // Ready / completed listener guards (avoid duplicate realtime subscriptions)
+        let readyListenerStarted = false;
+        let completedListenerStarted = false;
+
+        // Ready Notif
+        function listenForReadyNotification() {
+            let firstPhone = localStorage.getItem('cng_phone'); if(!firstPhone || readyListenerStarted) return;
+            readyListenerStarted = true;
+            db.ref('/heldOrders').on('value', snap => {
+                const myPhone = localStorage.getItem('cng_phone'); if(!myPhone) return;
+                let held = snap.val() || []; if(!Array.isArray(held)) held = Object.values(held);
+                held.filter(o => String(o.customerPhone||'') === String(myPhone) && String(o.status||'').toLowerCase() === 'ready').forEach(o => triggerReadyPopup(o.id));
+            });
+        }
+        function triggerReadyPopup(orderId) {
+            let notifiedList = JSON.parse(localStorage.getItem('cng_notified') || '[]'); if(notifiedList.includes(orderId)) return;
+            document.getElementById('readyPopup').classList.add('show'); playBeep();
+            notifiedList.push(orderId); localStorage.setItem('cng_notified', JSON.stringify(notifiedList));
+            addNotification(isArabic ? `طلبك #${orderId} جاهز!` : `Order #${orderId} is Ready!`); fetchOrderHistory();
+        }
+        window.closeReadyPopup = function() { document.getElementById('readyPopup').classList.remove('show'); }
+
+        // Completed Order Notification (NEW)
+        function listenForCompletedNotification() {
+            let myPhone = localStorage.getItem('cng_phone'); if(!myPhone || completedListenerStarted) return;
+            completedListenerStarted = true;
+            
+            db.ref('/orders').on('child_added', snap => {
+                let o = snap.val();
+                if(o && String(o.customerPhone||'') === String(myPhone)) {
+                    let completedNotified = JSON.parse(localStorage.getItem('cng_completed_notified') || '[]');
+                    if(!completedNotified.includes(o.id)) {
+                        completedNotified.push(o.id); localStorage.setItem('cng_completed_notified', JSON.stringify(completedNotified));
+                        showToast(isArabic ? "✅ تم اكتمال طلبك! شكراً لك." : "✅ Order Completed! Thank you.");
+                        addNotification(isArabic ? `طلبك #${o.id} مكتمل بنجاح!` : `Order #${o.id} is Completed!`);
+                        playBeep(); fetchOrderHistory(); 
+                    }
+                }
+            });
+        }
+
+        // Translate
+        function applyTranslations() {
+            document.documentElement.dir = isArabic ? 'rtl' : 'ltr'; document.getElementById('langBtn').innerText = isArabic ? 'English' : 'عربي';
+            let t = dict[isArabic ? 'ar' : 'en'];
+            if(isArabic) { document.getElementById('shopName').innerText = t.shopName; document.getElementById('aboutShopName').innerText = t.shopName; }
+            else { db.ref('/settings/shopName').once('value', s => { document.getElementById('shopName').innerText = s.val() || t.shopName; document.getElementById('aboutShopName').innerText = s.val() || t.shopName; }); }
+            document.getElementById('lblPreferences').innerText = t.pref; document.getElementById('lblSpecialNote').innerText = t.note; document.getElementById('sheetSpecialNote').placeholder = t.phNote; document.getElementById('btnAddFinal').innerHTML = `${t.addFinal}<span id="sheetTotalPrice">${document.getElementById('sheetTotalPrice').innerText}</span> SR`; document.getElementById('lblYourOrder').innerText = t.orderTitle; document.getElementById('custName').placeholder = t.phName; document.getElementById('custPhone').placeholder = t.phPhone; document.getElementById('carNumber').placeholder = t.phCar; document.getElementById('btnPlaceOrder').innerText = t.confirm; document.getElementById('lblMyOrders').innerText = t.myOrders; document.getElementById('lblHistory').innerText = t.history; document.getElementById('trackPhone').placeholder = t.phTrack; document.getElementById('lblNotif').innerText = t.notifTit; document.getElementById('navHome').innerText = t.navHome; document.getElementById('navCart').innerText = t.navCart; document.getElementById('navAbout').innerText = t.navAbout; document.getElementById('lblQrTitle').innerText = t.lblQr; document.getElementById('lblQrSub').innerText = t.subQr; document.getElementById('aboutDesc').innerText = t.aboutDesc; document.getElementById('promoTitle').innerText = t.promoTit; document.getElementById('promoDesc').innerText = t.promoDesc; document.getElementById('succTitle').innerText = t.succTit; document.getElementById('succMsg').innerText = t.succMsg; document.getElementById('lblEta').innerText = t.lblEta; document.getElementById('lblMin').innerText = t.lblMin; document.getElementById('btnTrackNow').innerText = t.btnTrackNow; document.getElementById('btnPromoCont').innerText = t.btnPromoCont;
+            document.getElementById('tagIce').innerText = t.tagIce; document.getElementById('tagHot').innerText = t.tagHot; document.getElementById('tagCold').innerText = t.tagCold;
+            
+            if(sliderImages && sliderImages.length > 1) { let track = document.getElementById('sliderTrack'); track.style.transform = `translateX(${currentSlide * 100 * (isArabic?1:-1)}%)`; }
+            renderCategories(); renderMenu(); fetchOrderHistory();
+            
+            // Update greeting immediately on lang change
+            let hr = new Date().getHours(); updateGreeting(hr);
+        }
+
+        window.toggleLanguage = function() {
+            isArabic = !isArabic;
+            applyTranslations();
+        }
+    </script>
+</body>
+</html>
