@@ -269,7 +269,16 @@
             display:none; position:fixed; inset:0; z-index:10000000; background:#120508;
             overflow:hidden; align-items:stretch; justify-content:stretch;
         }
-        #launchAd img,#launchAd video{width:100%;height:100%;object-fit:cover;display:block;background:#000;}
+        #launchAd img,#launchAd video{width:100%;height:100%;object-fit:cover;display:block;background:#120508;}
+        #launchAd video{opacity:0;transition:opacity .28s ease;}
+        #launchAd.video-ready video{opacity:1;}
+        #launchAd .video-preload-cover{
+            position:absolute;inset:0;z-index:1;display:none;align-items:center;justify-content:center;
+            background:radial-gradient(circle at 50% 40%,rgba(229,193,88,.12),transparent 42%),linear-gradient(160deg,#160306 0%,#31080f 48%,#110204 100%);
+            color:#E5C158;font-size:12px;font-weight:800;letter-spacing:.08em;
+        }
+        #launchAd.loading-video .video-preload-cover{display:flex;}
+        #launchAd.video-ready .video-preload-cover{opacity:0;pointer-events:none;transition:opacity .25s ease;}
         #launchAd::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.05),rgba(0,0,0,.12) 55%,rgba(0,0,0,.5));pointer-events:none;}
         .launch-skip{
             position:absolute;z-index:2;top:max(16px,env(safe-area-inset-top));right:18px;
@@ -795,6 +804,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
     <div id="launchAd">
         <img id="launchAdImage" alt="Promotion" style="display:none;">
         <video id="launchAdVideo" muted playsinline webkit-playsinline preload="auto" style="display:none;"></video>
+        <div class="video-preload-cover">CUP AND GO</div>
         <button class="launch-skip" id="launchSkipBtn" onclick="closeLaunchAd()">Skip Intro</button>
     </div>
 
@@ -1059,7 +1069,24 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         window.onload = () => {
             applyTranslations(); 
 
-            setTimeout(() => { let s = document.getElementById('splash-screen'); s.style.opacity = '0'; setTimeout(() => { s.style.display = 'none'; maybeShowLaunchAd(); }, 500); }, 1800);
+            // Keep the shop intro visible while we fetch the ad.
+            // Flow: Shop Intro -> Ad (if configured) -> App
+            setTimeout(async () => {
+                const s = document.getElementById('splash-screen');
+                try{
+                    const shown = await maybeShowLaunchAd(0, true);
+                    if(shown){
+                        s.style.opacity='0';
+                        setTimeout(()=>{ s.style.display='none'; },350);
+                    }else{
+                        s.style.opacity='0';
+                        setTimeout(()=>{ s.style.display='none'; checkWelcomePromo(); },500);
+                    }
+                }catch(e){
+                    s.style.opacity='0';
+                    setTimeout(()=>{ s.style.display='none'; checkWelcomePromo(); },500);
+                }
+            }, 1250);
             new QRCode(document.getElementById("qrcode"), { text: MY_QR_MENU_LINK, width: 130, height: 130, colorDark : "#000000", colorLight : "#ffffff" });
 
             let savedPhone = localStorage.getItem('cng_phone');
@@ -1089,43 +1116,80 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
                 openModal('appDialogModal');
             });
         }
-        function maybeShowLaunchAd(attempt=0){
-            if(!window.__latestCustomerSettings && attempt<6){ setTimeout(()=>maybeShowLaunchAd(attempt+1),250); return; }
-            const settings=window.__latestCustomerSettings||{};
-            const intro=settings.introAd||{};
+        async function maybeShowLaunchAd(attempt=0, preloadMode=false){
             const ad=document.getElementById('launchAd');
             const img=document.getElementById('launchAdImage');
             const vid=document.getElementById('launchAdVideo');
-            const hasVideo=!!(intro.video || (intro.mediaType==='video' && intro.media));
-            const hasImage=!!(intro.image || (intro.mediaType==='image' && intro.media));
-            const videoSrc=intro.video || (intro.mediaType==='video'?intro.media:'');
-            const imageSrc=intro.image || (intro.mediaType==='image'?intro.media:'');
-            if(intro.enabled && (hasVideo || hasImage)){
+
+            async function showIntro(intro, mediaOverride=''){
+                if(!intro || intro.enabled===false) return false;
+                const type=intro.mediaType || (intro.video?'video':(intro.image?'image':''));
+                let src=mediaOverride || intro.media || (type==='video'?intro.video:intro.image) || '';
+                if(!type || !src) return false;
+
                 clearTimeout(launchAdTimer);
                 document.getElementById('launchSkipBtn').innerText=isArabic?dict.ar.skipIntro:dict.en.skipIntro;
                 img.style.display='none'; vid.style.display='none';
-                try{ vid.pause(); }catch(e){}
+                try{vid.pause();}catch(e){}
                 vid.removeAttribute('src'); vid.onended=null; vid.onerror=null;
                 ad.style.display='flex';
-                if(hasVideo){
-                    vid.src=videoSrc; vid.style.display='block'; vid.currentTime=0; vid.muted=true;
+
+                if(type==='video'){
+                    ad.classList.remove('video-ready');
+                    ad.classList.add('loading-video');
+                    vid.style.opacity='0';
+                    vid.onloadeddata=()=>{
+                        // First decoded frame is ready: reveal it smoothly, no black flash.
+                        ad.classList.add('video-ready');
+                        ad.classList.remove('loading-video');
+                        requestAnimationFrame(()=>{ vid.style.opacity='1'; });
+                    };
+                    vid.onplaying=()=>{
+                        ad.classList.add('video-ready');
+                        ad.classList.remove('loading-video');
+                        vid.style.opacity='1';
+                    };
+                    vid.src=src; vid.style.display='block'; vid.currentTime=0; vid.muted=true;
                     vid.onended=closeLaunchAd;
-                    vid.onerror=()=>{ closeLaunchAd(); };
+                    vid.onerror=()=>closeLaunchAd();
                     const p=vid.play();
                     if(p&&typeof p.catch==='function') p.catch(()=>{ launchAdTimer=setTimeout(closeLaunchAd,5000); });
-                    // Safety timeout so a broken/very long file can never trap the customer.
                     launchAdTimer=setTimeout(closeLaunchAd,30000);
-                } else {
-                    img.src=imageSrc; img.style.display='block';
+                }else{
+                    img.src=src; img.style.display='block';
                     const sec=Math.max(2,Math.min(10,parseInt(intro.duration)||4));
                     launchAdTimer=setTimeout(closeLaunchAd,sec*1000);
                 }
-            } else checkWelcomePromo();
+                return true;
+            }
+
+            try{
+                // New reliable format: tiny config loads first; large media is separate.
+                const cfgSnap=await db.ref('/customerIntroAd/config').once('value');
+                const cfg=cfgSnap.val();
+                if(cfg && cfg.enabled && cfg.mediaType){
+                    const mediaSnap=await db.ref('/customerIntroAd/media').once('value');
+                    const media=mediaSnap.val()||'';
+                    if(await showIntro(cfg,media)) return true;
+                }
+            }catch(e){ console.warn('Intro ad config read failed',e); }
+
+            // Backward compatibility with older files/settings.
+            if(!window.__latestCustomerSettings && attempt<20){
+                await new Promise(resolve=>setTimeout(resolve,300));
+                return await maybeShowLaunchAd(attempt+1, preloadMode);
+            }
+            const settings=window.__latestCustomerSettings||{};
+            if(await showIntro(settings.introAd||{})) return true;
+            if(!preloadMode) checkWelcomePromo();
+            return false;
         }
         window.closeLaunchAd=function(){
             clearTimeout(launchAdTimer); const ad=document.getElementById('launchAd');
             const vid=document.getElementById('launchAdVideo');
             try{vid.pause();vid.currentTime=0;}catch(e){}
+            ad.classList.remove('loading-video','video-ready');
+            vid.style.opacity='0';
             if(ad.style.display!=='none'){ad.style.opacity='0';ad.style.transition='opacity .35s ease';setTimeout(()=>{ad.style.display='none';ad.style.opacity='1';checkWelcomePromo();},350);}
         };
         function checkWelcomePromo() {
