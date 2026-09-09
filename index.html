@@ -270,13 +270,21 @@
             overflow:hidden; align-items:stretch; justify-content:stretch;
         }
         #launchAd img,#launchAd video{width:100%;height:100%;object-fit:cover;display:block;background:#120508;}
-        #launchAd video{opacity:0;transition:opacity .28s ease;}
+        #launchAd video{opacity:0;transition:opacity .38s cubic-bezier(.22,1,.36,1);}
         #launchAd.video-ready video{opacity:1;}
         #launchAd .video-preload-cover{
             position:absolute;inset:0;z-index:1;display:none;align-items:center;justify-content:center;
             background:radial-gradient(circle at 50% 40%,rgba(229,193,88,.12),transparent 42%),linear-gradient(160deg,#160306 0%,#31080f 48%,#110204 100%);
-            color:#E5C158;font-size:12px;font-weight:800;letter-spacing:.08em;
+            color:transparent;font-size:0;
+            opacity:1;transition:opacity .28s ease;
         }
+        #launchAd .video-preload-cover::after{
+            content:'';width:38px;height:1px;border-radius:999px;
+            background:linear-gradient(90deg,transparent,rgba(229,193,88,.62),transparent);
+            box-shadow:0 0 18px rgba(229,193,88,.16);
+            animation:cngBridgeGlow .85s ease-in-out infinite alternate;
+        }
+        @keyframes cngBridgeGlow{from{opacity:.28;transform:scaleX(.72)}to{opacity:.72;transform:scaleX(1)}}
         #launchAd.loading-video .video-preload-cover{display:flex;}
         #launchAd.video-ready .video-preload-cover{opacity:0;pointer-events:none;transition:opacity .25s ease;}
         #launchAd::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.05),rgba(0,0,0,.12) 55%,rgba(0,0,0,.5));pointer-events:none;}
@@ -804,7 +812,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
     <div id="launchAd">
         <img id="launchAdImage" alt="Promotion" style="display:none;">
         <video id="launchAdVideo" muted playsinline webkit-playsinline preload="auto" style="display:none;"></video>
-        <div class="video-preload-cover">CUP AND GO</div>
+        <div class="video-preload-cover" aria-hidden="true"></div>
         <button class="launch-skip" id="launchSkipBtn" onclick="closeLaunchAd()">Skip Intro</button>
     </div>
 
