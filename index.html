@@ -35,7 +35,7 @@
         body { font-family: 'Cairo', 'Inter', sans-serif; background: var(--bg-gradient); background-attachment: fixed; color: var(--text); margin: 0; padding: 0; padding-bottom: 90px; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
         
         /* SPLASH INTRO — MATCH ADMIN */
-        #splash-screen{position:fixed!important;inset:0!important;z-index:9999999!important;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;direction:ltr!important;background:radial-gradient(circle at 50% 40%,rgba(229,193,88,.14) 0%,rgba(229,193,88,.035) 28%,transparent 58%),linear-gradient(160deg,#160306 0%,#31080f 48%,#110204 100%)!important;transition:opacity .95s cubic-bezier(.22,1,.36,1),transform .95s cubic-bezier(.22,1,.36,1),filter .95s ease!important;will-change:opacity,transform,filter}
+        #splash-screen{position:fixed!important;inset:0!important;z-index:9999999!important;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;direction:ltr!important;background:radial-gradient(circle at 50% 40%,rgba(229,193,88,.14) 0%,rgba(229,193,88,.035) 28%,transparent 58%),linear-gradient(160deg,#160306 0%,#31080f 48%,#110204 100%)!important;transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1),filter .55s ease!important;will-change:opacity,transform,filter}
         #splash-screen::before{content:'';position:absolute;width:min(78vw,430px);height:1px;top:53%;background:linear-gradient(90deg,transparent,rgba(229,193,88,.48),transparent);transform:scaleX(0);opacity:0;animation:customerSplashLine 1.6s .35s cubic-bezier(.22,1,.36,1) forwards}
         #splash-screen::after{content:'';position:absolute;width:min(66vw,290px);aspect-ratio:1;border-radius:50%;border:1px solid rgba(229,193,88,.09);box-shadow:0 0 90px rgba(229,193,88,.06);opacity:0;transform:scale(.82);animation:customerSplashHalo 2.1s .12s ease-out forwards}
         #splash-screen .splash-copy{position:relative;z-index:2;width:min(90vw,560px);direction:ltr!important;unicode-bidi:isolate}
@@ -270,7 +270,7 @@
             overflow:hidden; align-items:stretch; justify-content:stretch;
         }
         #launchAd img,#launchAd video{width:100%;height:100%;object-fit:cover;display:block;background:#120508;}
-        #launchAd video{opacity:0;transition:opacity .38s cubic-bezier(.22,1,.36,1);}
+        #launchAd video{opacity:0;transition:opacity .22s cubic-bezier(.22,1,.36,1);}
         #launchAd.video-ready video{opacity:1;}
         #launchAd .video-preload-cover{
             position:absolute;inset:0;z-index:1;display:none;align-items:center;justify-content:center;
@@ -279,14 +279,12 @@
             opacity:1;transition:opacity .28s ease;
         }
         #launchAd .video-preload-cover::after{
-            content:'';width:38px;height:1px;border-radius:999px;
-            background:linear-gradient(90deg,transparent,rgba(229,193,88,.62),transparent);
-            box-shadow:0 0 18px rgba(229,193,88,.16);
-            animation:cngBridgeGlow .85s ease-in-out infinite alternate;
+            content:'';position:absolute;inset:0;
+            background:radial-gradient(circle at 50% 42%,rgba(229,193,88,.055),transparent 40%),linear-gradient(180deg,rgba(255,255,255,.012),rgba(0,0,0,.025));
+            opacity:.9;
         }
-        @keyframes cngBridgeGlow{from{opacity:.28;transform:scaleX(.72)}to{opacity:.72;transform:scaleX(1)}}
         #launchAd.loading-video .video-preload-cover{display:flex;}
-        #launchAd.video-ready .video-preload-cover{opacity:0;pointer-events:none;transition:opacity .25s ease;}
+        #launchAd.video-ready .video-preload-cover{opacity:0;pointer-events:none;transition:opacity .18s ease;}
         #launchAd::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.05),rgba(0,0,0,.12) 55%,rgba(0,0,0,.5));pointer-events:none;}
         .launch-skip{
             position:absolute;z-index:2;top:max(16px,env(safe-area-inset-top));right:18px;
@@ -1116,16 +1114,16 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
                     const shown = await maybeShowLaunchAd(0, true);
                     if(shown){
                         s.style.opacity='0';
-                        setTimeout(()=>{ s.style.display='none'; },350);
+                        setTimeout(()=>{ s.style.display='none'; },220);
                     }else{
                         s.style.opacity='0';
-                        setTimeout(()=>{ s.style.display='none'; checkWelcomePromo(); },500);
+                        setTimeout(()=>{ s.style.display='none'; checkWelcomePromo(); },280);
                     }
                 }catch(e){
                     s.style.opacity='0';
-                    setTimeout(()=>{ s.style.display='none'; checkWelcomePromo(); },500);
+                    setTimeout(()=>{ s.style.display='none'; checkWelcomePromo(); },280);
                 }
-            }, 1250);
+            }, 850);
             new QRCode(document.getElementById("qrcode"), { text: MY_QR_MENU_LINK, width: 130, height: 130, colorDark : "#000000", colorLight : "#ffffff" });
 
             let savedPhone = localStorage.getItem('cng_phone');
