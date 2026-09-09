@@ -269,7 +269,7 @@
             display:none; position:fixed; inset:0; z-index:10000000; background:#120508;
             overflow:hidden; align-items:stretch; justify-content:stretch;
         }
-        #launchAd img{width:100%;height:100%;object-fit:cover;display:block;}
+        #launchAd img,#launchAd video{width:100%;height:100%;object-fit:cover;display:block;background:#000;}
         #launchAd::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.05),rgba(0,0,0,.12) 55%,rgba(0,0,0,.5));pointer-events:none;}
         .launch-skip{
             position:absolute;z-index:2;top:max(16px,env(safe-area-inset-top));right:18px;
@@ -730,6 +730,17 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
 }
 </style>
 
+
+<style id="cng-customer-payment-final">
+.cng-payment-card{background:#fff;border:1px solid #e7eaf0;border-radius:20px;padding:14px;margin:12px 0;box-shadow:0 8px 20px rgba(20,27,43,.05)}
+.cng-payment-title{font-size:12px;font-weight:900;color:#141b2b;margin-bottom:10px}
+.cng-payment-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cng-pay-option{position:relative;cursor:pointer}
+.cng-pay-option input{position:absolute;opacity:0;pointer-events:none}
+.cng-pay-box{height:54px;border-radius:15px;border:1.5px solid #e3e6eb;background:#f8f9fb;color:#303746;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:900;font-size:12px;transition:.18s}
+.cng-pay-option input:checked + .cng-pay-box{border-color:#ff941f;background:#fff4e8;color:#d86400;box-shadow:0 0 0 3px rgba(255,148,31,.10)}
+</style>
+
 </head>
 <body>
 
@@ -782,7 +793,8 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
     <div id="welcomeToast" class="welcome-toast">أهلاً بك ☕ Welcome!</div>
 
     <div id="launchAd">
-        <img id="launchAdImage" alt="Promotion">
+        <img id="launchAdImage" alt="Promotion" style="display:none;">
+        <video id="launchAdVideo" muted playsinline webkit-playsinline preload="auto" style="display:none;"></video>
         <button class="launch-skip" id="launchSkipBtn" onclick="closeLaunchAd()">Skip Intro</button>
     </div>
 
@@ -876,6 +888,14 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
                     <input type="text" id="custName" class="input-field" placeholder="Your Name" required>
                     <input type="tel" id="custPhone" class="input-field" placeholder="Mobile Number" required>
                     <input type="text" id="carNumber" class="input-field" placeholder="Car Number (Optional)">
+                </div>
+
+                <div class="cng-payment-card" id="cngPaymentCard">
+                    <div class="cng-payment-title">💳 Payment Method / طريقة الدفع</div>
+                    <div class="cng-payment-options">
+                        <label class="cng-pay-option"><input type="radio" name="checkoutPaymentMethod" value="Cash"><span class="cng-pay-box">💵 Cash / نقداً</span></label>
+                        <label class="cng-pay-option"><input type="radio" name="checkoutPaymentMethod" value="Card"><span class="cng-pay-box">💳 Card / بطاقة</span></label>
+                    </div>
                 </div>
 
                 <div class="checkout-note-card">
@@ -1073,16 +1093,39 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
             if(!window.__latestCustomerSettings && attempt<6){ setTimeout(()=>maybeShowLaunchAd(attempt+1),250); return; }
             const settings=window.__latestCustomerSettings||{};
             const intro=settings.introAd||{};
-            if(intro.enabled && intro.image){
-                const ad=document.getElementById('launchAd'); const img=document.getElementById('launchAdImage');
-                img.src=intro.image; document.getElementById('launchSkipBtn').innerText=isArabic?dict.ar.skipIntro:dict.en.skipIntro;
+            const ad=document.getElementById('launchAd');
+            const img=document.getElementById('launchAdImage');
+            const vid=document.getElementById('launchAdVideo');
+            const hasVideo=!!(intro.video || (intro.mediaType==='video' && intro.media));
+            const hasImage=!!(intro.image || (intro.mediaType==='image' && intro.media));
+            const videoSrc=intro.video || (intro.mediaType==='video'?intro.media:'');
+            const imageSrc=intro.image || (intro.mediaType==='image'?intro.media:'');
+            if(intro.enabled && (hasVideo || hasImage)){
+                clearTimeout(launchAdTimer);
+                document.getElementById('launchSkipBtn').innerText=isArabic?dict.ar.skipIntro:dict.en.skipIntro;
+                img.style.display='none'; vid.style.display='none';
+                try{ vid.pause(); }catch(e){}
+                vid.removeAttribute('src'); vid.onended=null; vid.onerror=null;
                 ad.style.display='flex';
-                const sec=Math.max(2,Math.min(10,parseInt(intro.duration)||4));
-                clearTimeout(launchAdTimer); launchAdTimer=setTimeout(closeLaunchAd,sec*1000);
+                if(hasVideo){
+                    vid.src=videoSrc; vid.style.display='block'; vid.currentTime=0; vid.muted=true;
+                    vid.onended=closeLaunchAd;
+                    vid.onerror=()=>{ closeLaunchAd(); };
+                    const p=vid.play();
+                    if(p&&typeof p.catch==='function') p.catch(()=>{ launchAdTimer=setTimeout(closeLaunchAd,5000); });
+                    // Safety timeout so a broken/very long file can never trap the customer.
+                    launchAdTimer=setTimeout(closeLaunchAd,30000);
+                } else {
+                    img.src=imageSrc; img.style.display='block';
+                    const sec=Math.max(2,Math.min(10,parseInt(intro.duration)||4));
+                    launchAdTimer=setTimeout(closeLaunchAd,sec*1000);
+                }
             } else checkWelcomePromo();
         }
         window.closeLaunchAd=function(){
             clearTimeout(launchAdTimer); const ad=document.getElementById('launchAd');
+            const vid=document.getElementById('launchAdVideo');
+            try{vid.pause();vid.currentTime=0;}catch(e){}
             if(ad.style.display!=='none'){ad.style.opacity='0';ad.style.transition='opacity .35s ease';setTimeout(()=>{ad.style.display='none';ad.style.opacity='1';checkWelcomePromo();},350);}
         };
         function checkWelcomePromo() {
@@ -1351,10 +1394,13 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         window.placeOrder = async function() {
             let isManual = document.getElementById('manualProfileView').style.display !== 'none'; let name, phone, car;
             if(isManual) { name = document.getElementById('custName').value.trim(); phone = document.getElementById('custPhone').value.trim(); car = document.getElementById('carNumber').value.trim(); if(!name || !phone) { await appDialog(isArabic ? "الاسم ورقم الجوال مطلوبان!" : "Name and Phone required!", {icon:"⚠️"}); return; } localStorage.setItem('cng_name', name); localStorage.setItem('cng_phone', phone); if(car) localStorage.setItem('cng_car', car); document.getElementById('trackPhone').value = phone; listenForReadyNotification(); listenForCompletedNotification(); } else { name = localStorage.getItem('cng_name') || 'Guest'; phone = localStorage.getItem('cng_phone'); car = localStorage.getItem('cng_car') || ''; }
+            const paymentChoice=document.querySelector('input[name="checkoutPaymentMethod"]:checked');
+            if(!paymentChoice){ await appDialog(isArabic ? "اختر طريقة الدفع: نقداً أو بطاقة" : "Please choose payment method: Cash or Card", {icon:"💳"}); return; }
+            const paymentMethod=paymentChoice.value;
             let btn = document.getElementById('btnPlaceOrder'); btn.innerText = "Processing..."; btn.disabled = true;
             let orderNote = (document.getElementById('checkoutOrderNote')?.value || '').trim();
             let total = cart.reduce((s, c) => s + (c.price * c.qty), 0); let cashierInfo = car ? `Car: ${car} (${name})` : `Walk-in: ${name}`; let tNow = Date.now();
-            let orderData = { id: tNow, time: new Date().toLocaleTimeString(), items: cart, total: total, cashier: cashierInfo, customerPhone: phone, carNumber: car || "", timestamp: tNow, status: 'new', orderSource: 'customer', customerName: name, customerNote: orderNote };
+            let orderData = { id: tNow, time: new Date().toLocaleTimeString(), items: cart, total: total, cashier: cashierInfo, customerPhone: phone, carNumber: car || "", timestamp: tNow, status: 'new', orderSource: 'customer', customerName: name, customerNote: orderNote, paymentMethod: paymentMethod };
             // Atomic realtime append: prevents simultaneous customer orders from overwriting each other.
             db.ref('/customerOrders').transaction(current => {
                 let held = current || [];
@@ -1363,7 +1409,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
                 return held;
             }).then(result => {
                 if(!result.committed) throw new Error('Order was not committed');
-                cart = []; const noteBox=document.getElementById('checkoutOrderNote'); if(noteBox) noteBox.value=''; updateCartBadge(); btn.innerText = dict[isArabic?'ar':'en'].confirm; btn.disabled = false;
+                cart = []; const noteBox=document.getElementById('checkoutOrderNote'); if(noteBox) noteBox.value=''; document.querySelectorAll('input[name="checkoutPaymentMethod"]').forEach(r=>r.checked=false); updateCartBadge(); btn.innerText = dict[isArabic?'ar':'en'].confirm; btn.disabled = false;
                 document.querySelectorAll('.nav-item')[0].click(); 
                 startEtaTimer(adminWaitTimeMin); window.openModal('orderSuccessModal'); addNotification(isArabic ? "تم استلام الطلب!" : "Order placed successfully!");
             }).catch(async e => { await appDialog(isArabic ? "تعذر إرسال الطلب. تحقق من الإنترنت وحاول مرة أخرى." : "Could not send the order. Check your internet and try again.", {icon:"⚠️"}); btn.disabled = false; });
