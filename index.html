@@ -357,6 +357,22 @@ input,select,textarea{max-width:100%;}
 .item-img{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;}
 </style>
 
+
+<style id="red-animated-order-tracking">
+.cng-live-track{position:relative;margin:13px 0 10px;padding:12px 8px 8px;border-radius:15px;background:linear-gradient(180deg,rgba(255,45,45,.075),rgba(255,255,255,.018));border:1px solid rgba(255,74,74,.18);overflow:hidden}
+.cng-live-track::before{content:"";position:absolute;inset:-35% -10%;background:radial-gradient(circle,rgba(255,45,45,.11),transparent 55%);animation:cngTrackBreath 2.1s ease-in-out infinite;pointer-events:none}
+.cng-track-line{position:relative;height:5px;background:rgba(255,255,255,.11);border-radius:999px;margin:2px 19px 11px;overflow:visible}
+.cng-track-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#ff2d2d,#ff5a3c);box-shadow:0 0 12px rgba(255,45,45,.78);transition:width .45s cubic-bezier(.2,.8,.2,1);position:relative}
+.cng-track-fill::after{content:"";position:absolute;right:-5px;top:50%;width:11px;height:11px;border-radius:50%;background:#ff3434;transform:translateY(-50%);box-shadow:0 0 0 0 rgba(255,52,52,.72);animation:cngRedPulse 1.25s infinite}
+.cng-track-steps{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;text-align:center;font-size:9px;line-height:1.25;z-index:1}
+.cng-track-step{color:var(--muted);transition:.3s ease}.cng-track-step b{display:flex;width:25px;height:25px;border-radius:50%;align-items:center;justify-content:center;margin:0 auto 5px;border:1px solid rgba(255,255,255,.18);font-size:12px;color:var(--muted);background:rgba(255,255,255,.045);transition:.3s ease}
+.cng-track-step.done{color:#fff}.cng-track-step.done b{color:#fff;border-color:#ff4545;background:rgba(255,45,45,.18);box-shadow:0 0 13px rgba(255,45,45,.28)}
+.cng-track-step.current b{background:#ff3434;color:#fff;border-color:#ff7777;box-shadow:0 0 0 0 rgba(255,52,52,.7);animation:cngRedPulse 1.25s infinite}
+.cng-track-step.current{color:#fff;font-weight:800}
+@keyframes cngRedPulse{0%{box-shadow:0 0 0 0 rgba(255,52,52,.65)}70%{box-shadow:0 0 0 9px rgba(255,52,52,0)}100%{box-shadow:0 0 0 0 rgba(255,52,52,0)}}
+@keyframes cngTrackBreath{0%,100%{opacity:.45;transform:scale(.96)}50%{opacity:1;transform:scale(1.04)}}
+@media(prefers-reduced-motion:reduce){.cng-live-track::before,.cng-track-fill::after,.cng-track-step.current b{animation:none!important}}
+</style>
 </head>
 <body>
 
@@ -617,7 +633,7 @@ input,select,textarea{max-width:100%;}
         let launchAdTimer = null; let pendingDialogResolver = null;
 
         const dict = {
-            en: { shopName: "Cup And Go", allItems: "All Items", addBtn: "+ Add", pref: "Quick Preferences", note: "Special Instructions", phNote: "e.g. Extra hot...", orderTitle: "Your Order", phName: "Your Name", phPhone: "Mobile Number", phCar: "Car Number (Optional)", cancel: "Cancel", confirm: "Confirm Order", myOrders: "My Orders", history: "History", phTrack: "Mobile Number", prep: "Preparing...", comp: "Completed", notifTit: "Notifications", navHome: "Home", navCart: "Cart", navAbout: "About", lblQr: "Scan Full Menu", subQr: "Share this QR with friends", readyTit: "Order Ready!", readySub: "Please collect your order at the counter.", aboutDesc: "Welcome to Cup And Go, where passion meets coffee. We serve the finest blends and freshly baked desserts tailored just for you.", succTit: "Order Received!", succMsg: "Your delicious order is being prepared.", lblEta: "Estimated Wait Time", lblMin: "Minutes", btnTrackNow: "Track Order", tagIce: "Extra Ice", tagHot: "Hot 🔥", tagCold: "Cold 🧊", addFinal: "Add to Cart - ", promoTit: "Welcome", promoDesc: "Thank you for visiting us! Enjoy our finest coffee blends and freshly baked desserts tailored just for you.", btnPromoCont: "Continue", exploreMenu:"Explore Menu", tapCategory:"Choose a category", bestSeller:"BEST SELLER", popular:"POPULAR", skipIntro:"Skip Intro" },
+            en: { shopName: "Cup And Go", allItems: "All Items", addBtn: "+ Add", pref: "Quick Preferences", note: "Special Instructions", phNote: "e.g. Extra hot...", orderTitle: "Your Order", phName: "Your Name", phPhone: "Mobile Number", phCar: "Car Number (Optional)", cancel: "Cancel", confirm: "Confirm Order", myOrders: "My Orders", history: "History", phTrack: "Mobile Number", prep: "Preparing...", comp: "Completed", notifTit: "Notifications", navHome: "Home", navCart: "Cart", navAbout: "About", lblQr: "Scan Full Menu", subQr: "Share this QR with friends", readyTit: "Order Ready!", readySub: "Please collect your order at the counter.", aboutDesc: "Welcome to Cup And Go, where passion meets coffee. We serve the finest blends and freshly baked desserts tailored just for you.", succTit: "Order Received!", succMsg: "Your order was sent to the cashier. Waiting for confirmation.", lblEta: "Estimated Wait Time", lblMin: "Minutes", btnTrackNow: "Track Order", tagIce: "Extra Ice", tagHot: "Hot 🔥", tagCold: "Cold 🧊", addFinal: "Add to Cart - ", promoTit: "Welcome", promoDesc: "Thank you for visiting us! Enjoy our finest coffee blends and freshly baked desserts tailored just for you.", btnPromoCont: "Continue", exploreMenu:"Explore Menu", tapCategory:"Choose a category", bestSeller:"BEST SELLER", popular:"POPULAR", skipIntro:"Skip Intro" },
             ar: { shopName: "كوب آند جو", allItems: "الكل", addBtn: "+ إضافة", pref: "خيارات سريعة", note: "ملاحظات خاصة", phNote: "مثال: ساخن جداً...", orderTitle: "طلبك", phName: "الاسم", phPhone: "رقم الجوال", phCar: "رقم السيارة (اختياري)", cancel: "إلغاء", confirm: "تأكيد الطلب", myOrders: "طلباتي", history: "السجل", phTrack: "رقم الجوال", prep: "جاري التحضير...", comp: "مكتمل", notifTit: "الإشعارات", navHome: "الرئيسية", navCart: "السلة", navAbout: "حول", lblQr: "امسح القائمة", subQr: "شارك الكود مع أصدقائك", readyTit: "طلبك جاهز!", readySub: "يرجى استلام طلبك من الكاونتر.", aboutDesc: "مرحباً بك في كوب آند جو، حيث يلتقي الشغف بالقهوة. نقدم لك أفضل الخلطات والحلويات الطازجة المخبوزة خصيصاً لك.", succTit: "تم استلام الطلب!", succMsg: "جاري تحضير طلبك اللذيذ.", lblEta: "الوقت المقدر للانتظار", lblMin: "دقائق", btnTrackNow: "تتبع الطلب", tagIce: "زيادة ثلج", tagHot: "ساخن 🔥", tagCold: "بارد 🧊", addFinal: "أضف إلى السلة - ", promoTit: "مرحباً بك", promoDesc: "شكراً لزيارتك! استمتع بأفضل خلطات القهوة والحلويات المخبوزة طازجاً.", btnPromoCont: "متابعة", exploreMenu:"اكتشف القائمة", tapCategory:"اختر القسم", bestSeller:"الأكثر طلباً", popular:"رائج", skipIntro:"تخطي المقدمة" }
         };
 
@@ -967,10 +983,33 @@ input,select,textarea{max-width:100%;}
                 else {
                     let html = '';
                     myLive.forEach(o => {
-                        let isReady = String(o.status||'').toLowerCase() === 'ready'; let statusTxt = isReady ? (isArabic ? '✅ جاهز' : '✅ Ready') : '⏳ ' + tPrep; let colorTxt = isReady ? '#00E676' : '#FF9F0A';
+                        const st = String(o.status||'pending').toLowerCase();
+                        const isReady = st === 'ready';
+                        let statusTxt, statusSub, colorTxt, stagePct;
+                        if(st === 'pending'){
+                            statusTxt = isArabic ? '🧾 بانتظار تأكيد الكاشير' : '🧾 Waiting for cashier';
+                            statusSub = isArabic ? 'تم إرسال طلبك إلى الكاشير' : 'Order sent to cashier for confirmation';
+                            colorTxt = '#FFD54F'; stagePct = 33;
+                        } else if(['active','accepted','processing'].includes(st)){
+                            statusTxt = isArabic ? '⏳ جاري التحضير...' : '⏳ Preparing...';
+                            statusSub = isArabic ? 'أكد الكاشير الطلب ويجري تحضيره الآن' : 'Cashier accepted your order · Now preparing';
+                            colorTxt = '#FF9F0A'; stagePct = 66;
+                        } else if(isReady){
+                            statusTxt = isArabic ? '✅ جاهز للاستلام' : '✅ Ready for pickup';
+                            statusSub = isArabic ? 'يرجى استلام طلبك من الكاونتر' : 'Please collect your order at the counter';
+                            colorTxt = '#00E676'; stagePct = 100;
+                        } else {
+                            statusTxt = '⏳ ' + tPrep; statusSub = ''; colorTxt = '#FF9F0A'; stagePct = 66;
+                        }
                         let diff = Math.floor((Date.now() - o.timestamp) / 1000); let timeLeft = CANCEL_WINDOW_SEC - diff;
-                        let cancelBtnHtml = (!isReady && String(o.status||'').toLowerCase() === 'pending' && timeLeft > 0) ? `<button class="btn-cancel-timer" data-time="${o.timestamp}" onclick="cancelMyOrder('${o.id}')">${isArabic ? 'إلغاء' : 'Cancel'} (${timeLeft}s)</button>` : '';
-                        html += `<div class="order-card" style="border-color:${colorTxt};"><div style="display:flex; justify-content:space-between; margin-bottom:5px;"><strong style="color:${colorTxt};">${statusTxt}</strong><b style="color:#fff; font-family:'Inter',sans-serif;">${parseFloat(o.total).toFixed(2)} SR</b></div><div style="font-size:10px; color:var(--muted); font-family:'Inter',sans-serif;">Order #${o.id}</div>${cancelBtnHtml}</div>`;
+                        let cancelBtnHtml = (st === 'pending' && timeLeft > 0) ? `<button class="btn-cancel-timer" data-time="${o.timestamp}" onclick="cancelMyOrder('${o.id}')">${isArabic ? 'إلغاء' : 'Cancel'} (${timeLeft}s)</button>` : '';
+                        html += `<div class="order-card" style="border-color:${colorTxt};"><div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:5px;"><strong style="color:${colorTxt};">${statusTxt}</strong><b style="color:#fff; font-family:'Inter',sans-serif;white-space:nowrap;">${parseFloat(o.total).toFixed(2)} SR</b></div><div class="cng-live-track">
+<div class="cng-track-line"><div class="cng-track-fill" style="width:${stagePct}%;"></div></div>
+<div class="cng-track-steps">
+<div class="cng-track-step ${stagePct>=33?'done':''} ${stagePct===33?'current':''}"><b>1</b>${isArabic?'تم استلام الطلب':'Order Received'}</div>
+<div class="cng-track-step ${stagePct>=66?'done':''} ${stagePct===66?'current':''}"><b>2</b>${isArabic?'جاري التحضير':'Preparing'}</div>
+<div class="cng-track-step ${stagePct>=100?'done':''} ${stagePct===100?'current':''}"><b>3</b>${isArabic?'جاهز للاستلام':'Ready for Pickup'}</div>
+</div></div>${statusSub?`<div style="font-size:10px;color:var(--muted);margin-bottom:5px;line-height:1.45;">${statusSub}</div>`:''}<div style="font-size:10px; color:var(--muted); font-family:'Inter',sans-serif;">Order #${o.id}</div>${cancelBtnHtml}</div>`;
                     });
                     liveArea.innerHTML = html; updateCountdowns();
                 }
