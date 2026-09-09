@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -13,7 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <!-- Premium Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Inter:wght@400;700;900&family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Inter:wght@400;700;900&family=VT323&family=Cormorant+Garamond:wght@500;600&family=Great+Vibes&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -34,15 +34,54 @@
 
         body { font-family: 'Cairo', 'Inter', sans-serif; background: var(--bg-gradient); background-attachment: fixed; color: var(--text); margin: 0; padding: 0; padding-bottom: 90px; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
         
-        /* SPLASH INTRO */
-        #splash-screen { position: fixed; inset: 0; background: var(--brand-bg); z-index: 9999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; text-align: center; }
-        .splash-logo { font-size: 80px; animation: bounce 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite alternate; margin-bottom: 10px; }
-        .splash-title { color: var(--orange); font-weight: 900; font-size: 32px; letter-spacing: 2px; margin: 0; }
-        .dev-name-splash { position: absolute; bottom: 15px; font-size: 8px; color: rgba(255,255,255,0.25); letter-spacing: 0.5px; font-weight: normal; font-family: sans-serif; }
-        @keyframes bounce { 0% { transform: scale(0.9) translateY(0); } 100% { transform: scale(1.1) translateY(-10px); } }
+        /* PREMIUM SIGNATURE SPLASH — English-first, direction-safe */
+        #splash-screen {
+            position: fixed; inset: 0; z-index: 9999999; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center; overflow: hidden; direction:ltr;
+            background:
+              radial-gradient(circle at 50% 40%, rgba(229,193,88,.14) 0%, rgba(229,193,88,.035) 28%, transparent 58%),
+              linear-gradient(160deg, #160306 0%, #31080f 48%, #110204 100%);
+            transition: opacity .78s cubic-bezier(.22,1,.36,1), transform .78s cubic-bezier(.22,1,.36,1);
+        }
+        #splash-screen::before {
+            content: ''; position: absolute; width: min(78vw, 430px); height: 1px; top: 53%;
+            background: linear-gradient(90deg, transparent, rgba(229,193,88,.48), transparent);
+            transform: scaleX(0); opacity:0; animation: splashLine 1.5s .35s cubic-bezier(.22,1,.36,1) forwards;
+        }
+        #splash-screen::after {
+            content: ''; position: absolute; width: min(66vw, 290px); aspect-ratio:1; border-radius: 50%;
+            border: 1px solid rgba(229,193,88,.09); box-shadow: 0 0 90px rgba(229,193,88,.06);
+            opacity: 0; transform: scale(.82); animation: splashHalo 2s .12s ease-out forwards;
+        }
+        .splash-copy { position:relative; z-index:2; width:min(90vw,560px); direction:ltr; unicode-bidi:isolate; }
+        .splash-kicker {
+            color:#E7C69A; font-family:'Cormorant Garamond','Times New Roman',serif; font-size:clamp(17px,4.4vw,26px);
+            font-weight:600; letter-spacing:.08em; line-height:1.2; text-transform:uppercase; white-space:nowrap;
+            opacity:0; transform:translateY(14px); filter:blur(4px); animation:kickerIn .95s .22s cubic-bezier(.16,1,.3,1) forwards;
+            text-shadow:0 2px 18px rgba(229,193,88,.08);
+        }
+        .splash-signature {
+            margin-top:10px; color:#F1C98F; font-family:'Great Vibes','Brush Script MT',cursive;
+            font-size:clamp(52px,15vw,86px); font-weight:400; line-height:1; white-space:nowrap; direction:ltr; unicode-bidi:isolate;
+            opacity:0; transform:translateY(20px) scale(.94); filter:blur(7px);
+            animation:signatureIn 1.05s .62s cubic-bezier(.16,1,.3,1) forwards;
+            text-shadow:0 0 30px rgba(229,193,88,.13);
+        }
+        .splash-tagline {
+            position:relative; z-index:2; margin-top:22px; color:rgba(255,255,255,.48); font-size:8px;
+            font-family:'Inter',sans-serif; font-weight:600; letter-spacing:.34em; text-transform:uppercase; direction:ltr;
+            opacity:0; transform:translateY(8px); animation:taglineIn .75s 1.18s ease forwards;
+        }
+        .dev-name-splash { position:absolute; bottom:max(18px, env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%) translateY(8px); z-index:2; font-size:8px; color:rgba(255,255,255,.30); letter-spacing:.07em; font-weight:500; font-family:'Inter',sans-serif; opacity:0; white-space:nowrap; direction:ltr; animation:devIn .7s 1.38s ease forwards; }
+        @keyframes kickerIn { to { opacity:1; transform:translateY(0); filter:blur(0); } }
+        @keyframes signatureIn { 0%{opacity:0;transform:translateY(20px) scale(.94);filter:blur(7px)} 72%{opacity:1;transform:translateY(-2px) scale(1.015);filter:blur(0)} 100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)} }
+        @keyframes devIn { to { opacity:1; transform:translateX(-50%) translateY(0); } }
+        @keyframes taglineIn { to { opacity:1; transform:translateY(0); } }
+        @keyframes splashLine { 0%{transform:scaleX(0);opacity:0}45%{opacity:1}100%{transform:scaleX(1);opacity:.36} }
+        @keyframes splashHalo { 0%{opacity:0;transform:scale(.82)}55%{opacity:.68}100%{opacity:.16;transform:scale(1.08)} }
 
         /* Welcome & Alert Toast */
-        .welcome-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.95); color: #000; padding: 10px 25px; border-radius: 30px; font-weight: 900; font-size: 13px; z-index: 100000; box-shadow: 0 5px 20px rgba(0,0,0,0.5); transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap; border: 1px solid var(--glass-border-light); }
+        .welcome-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(40,8,13,0.92); color: #fff; padding: 10px 25px; border-radius: 30px; font-weight: 900; font-size: 13px; z-index: 100000; box-shadow: 0 5px 20px rgba(0,0,0,0.5); transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap; border: 1px solid var(--glass-border-light); }
         .welcome-toast.show { top: 20px; }
 
         /* 🆕 CLEAN HEADER */
@@ -199,6 +238,93 @@
         .ready-box { background: rgba(0, 230, 118, 0.15); border: 1px solid rgba(0, 230, 118, 0.5); border-radius: 30px; padding: 35px 25px; text-align: center; width: 85%; max-width: 340px; box-shadow: 0 15px 40px rgba(0,230,118,0.2); transform: scale(0.8); transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .ready-popup.show .ready-box { transform: scale(1); }
         .ready-bell { font-size: 70px; animation: shake 0.5s infinite alternate; margin-bottom: 20px; filter: drop-shadow(0 0 20px rgba(0,230,118,0.5)); }
+
+        /* ===== PREMIUM MOBILE HOME REFRESH ===== */
+        .welcome-toast{
+            top:-110px; background:rgba(30,10,15,.96)!important; color:#fff!important;
+            border:1px solid rgba(229,193,88,.45)!important; box-shadow:0 12px 35px rgba(0,0,0,.55)!important;
+        }
+        .welcome-toast.show{top:max(16px,env(safe-area-inset-top));}
+        .search-container{padding:18px 18px 12px;}
+        .led-matrix-container{margin:4px 18px 14px;border-radius:16px;}
+        .slider-container{
+            margin:0 18px 18px; height:auto!important; aspect-ratio:16/6;
+            min-height:112px; max-height:178px; border-radius:20px;
+            border:1px solid rgba(229,193,88,.35); box-shadow:0 14px 38px rgba(0,0,0,.42);
+        }
+        .slide img{object-fit:cover;background:#17070b;}
+        .home-section-label{
+            padding:0 20px 10px; display:flex; align-items:center; justify-content:space-between;
+            font-weight:900; font-size:12px; color:var(--orange); letter-spacing:.2px;
+        }
+        .home-cat-grid{
+            grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; padding:0 18px 22px;
+        }
+        .home-cat-box{
+            min-width:0; height:54px; padding:7px 4px; border-radius:14px;
+            background:linear-gradient(145deg,rgba(255,255,255,.09),rgba(255,255,255,.035));
+            border:1px solid rgba(255,255,255,.16); box-shadow:0 8px 24px rgba(0,0,0,.28);
+        }
+        .home-cat-icon{font-size:17px;margin-bottom:2px;}
+        .home-cat-title{font-size:9.5px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;display:block;}
+        .cat-slider{
+            position:sticky; top:92px; z-index:900; padding:12px 16px; margin:26px 12px 14px;
+            border-radius:18px; background:rgba(30,10,15,.88);
+            border:1px solid rgba(255,255,255,.12); backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px);
+            box-shadow:0 10px 30px rgba(0,0,0,.32);
+        }
+        .cat-chip{flex:0 0 auto; min-width:82px; text-align:center; padding:8px 12px!important; border-radius:14px!important;}
+        .bestseller-badge{
+            top:8px; left:8px; background:linear-gradient(135deg,#ff3b30,#ff7a00);
+            border:1px solid rgba(255,255,255,.35); box-shadow:0 5px 15px rgba(0,0,0,.28);
+            font-size:8px; letter-spacing:.2px; padding:4px 7px;
+        }
+        .popular-badge{
+            position:absolute;top:8px;left:8px;z-index:3;padding:4px 7px;border-radius:9px;
+            font-size:8px;font-weight:900;color:#241807;background:linear-gradient(135deg,#ffe38a,#e5c158);
+            border:1px solid rgba(255,255,255,.45);box-shadow:0 5px 15px rgba(0,0,0,.25);
+        }
+        html[dir="rtl"] .popular-badge{left:auto;right:8px;}
+        .app-dialog-card{
+            width:min(330px,calc(100vw - 34px)); border-radius:24px; padding:22px 18px;
+            background:linear-gradient(145deg,rgba(52,12,22,.98),rgba(20,5,9,.98));
+            border:1px solid rgba(229,193,88,.38); box-shadow:0 20px 60px rgba(0,0,0,.7);
+            color:#fff;text-align:center;
+        }
+        .app-dialog-actions{display:flex;gap:10px;margin-top:18px;}
+        .app-dialog-actions button{flex:1;border:0;border-radius:14px;padding:12px;font-weight:900;font-family:inherit;}
+        .app-dialog-ok{background:var(--orange);color:#241807;}
+        .app-dialog-cancel{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.15)!important;}
+        #launchAd{
+            display:none; position:fixed; inset:0; z-index:10000000; background:#120508;
+            overflow:hidden; align-items:stretch; justify-content:stretch;
+        }
+        #launchAd img{width:100%;height:100%;object-fit:cover;display:block;}
+        #launchAd::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.05),rgba(0,0,0,.12) 55%,rgba(0,0,0,.5));pointer-events:none;}
+        .launch-skip{
+            position:absolute;z-index:2;top:max(16px,env(safe-area-inset-top));right:18px;
+            border:1px solid rgba(255,255,255,.45);background:rgba(20,5,9,.55);backdrop-filter:blur(12px);
+            color:#fff;border-radius:18px;padding:8px 13px;font-weight:800;font-family:inherit;
+        }
+        html[dir="rtl"] .launch-skip{right:auto;left:18px;}
+        @media(max-width:380px){
+            .header{padding-left:10px;padding-right:10px}
+            .shop-title{font-size:17px}.home-cat-grid{gap:6px;padding-left:12px;padding-right:12px}
+            .home-cat-box{height:50px}.home-cat-title{font-size:8.7px}.slider-container{margin-left:12px;margin-right:12px}
+        }
+
+    
+        /* FINAL ORDER EXPERIENCE */
+        .order-timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:10px 0 4px;direction:ltr;}
+        .order-step{position:relative;text-align:center;font-size:8px;font-weight:800;color:rgba(255,255,255,.45);padding-top:18px;}
+        .order-step:before{content:'';position:absolute;top:5px;left:50%;transform:translateX(-50%);width:9px;height:9px;border-radius:50%;background:#5b4a4e;border:2px solid #231216;z-index:2;}
+        .order-step:not(:last-child):after{content:'';position:absolute;top:10px;left:55%;width:90%;height:2px;background:#5b4a4e;z-index:1;}
+        .order-step.done,.order-step.current{color:#fff}.order-step.done:before,.order-step.current:before{background:#00E676;box-shadow:0 0 10px rgba(0,230,118,.45)}
+        .order-step.done:not(:last-child):after{background:#00E676}.order-step.current:before{background:var(--orange);box-shadow:0 0 10px rgba(229,193,88,.5)}
+        .soldout-badge{position:absolute;inset:auto 8px 8px 8px;background:rgba(128,15,28,.9);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:5px;text-align:center;font-size:9px;font-weight:900;letter-spacing:.5px;z-index:3;}
+        .item-card.is-soldout{opacity:.62;filter:saturate(.65)}.item-card.is-soldout .btn-add{pointer-events:none;opacity:.6;}
+        .repeat-order-btn{width:100%;border:1px solid rgba(229,193,88,.38);background:rgba(229,193,88,.08);color:var(--orange);border-radius:13px;padding:10px 12px;font-weight:900;font-size:11px;margin:0 0 13px;cursor:pointer;}
+
     </style>
 
 <style id="mobile-compat-patch">
@@ -213,13 +339,42 @@ input,select,textarea{max-width:100%;}
 }
 </style>
 
+
+<style id="customer-final-polish">
+/* More breathing room before menu categories on mobile */
+#tab-menu{padding-top:1px}
+#tab-menu .cat-slider{margin-top:28px!important}
+@media(max-width:380px){#tab-menu .cat-slider{margin-top:22px!important;padding:10px 12px}.cat-chip{min-width:76px!important;padding:7px 10px!important}}
+@media(min-width:700px){#tab-menu .cat-slider{margin-top:32px!important;max-width:820px;margin-left:auto!important;margin-right:auto!important}}
+/* Prevent expensive effects from making scrolling feel heavy on phones */
+.menu-grid,.home-cat-grid{contain:layout paint style}
+.slide img,.product-img img{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.slider-track{will-change:transform}
+@media(max-width:480px){
+  .slider-container,.home-cat-box,.product-card,.cat-slider{box-shadow:0 8px 24px rgba(0,0,0,.30)!important}
+  .cat-slider{backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+
+
+<style id="final-smooth-intro-css">
+#splash-screen{transition:opacity .95s cubic-bezier(.22,1,.36,1),transform .95s cubic-bezier(.22,1,.36,1),filter .95s ease!important;will-change:opacity,transform,filter}
+.splash-kicker{animation-duration:1.05s!important}
+.splash-signature{animation-duration:1.2s!important}
+.splash-tagline{animation-duration:.9s!important}
+#splash-screen.splash-exit{opacity:0!important;transform:scale(1.025)!important;filter:blur(4px)!important;pointer-events:none!important}
+</style>
 </head>
 <body>
 
-    <!-- SPLASH INTRO -->
-    <div id="splash-screen">
-        <div class="splash-logo">☕</div>
-        <h1 class="splash-title">Cup And Go</h1>
+    <!-- PREMIUM ENGLISH SIGNATURE SPLASH INTRO -->
+    <div id="splash-screen" aria-label="Cup And Go" dir="ltr">
+        <div class="splash-copy">
+            <div class="splash-kicker">WITH A CUP OF COFFEE FROM</div>
+            <div class="splash-signature">Cup And Go</div>
+            <div class="splash-tagline">BREW • PICK UP • GO</div>
+        </div>
         <div class="dev-name-splash">Developed by Mohammed Ashik</div>
     </div>
 
@@ -227,9 +382,9 @@ input,select,textarea{max-width:100%;}
     <div class="modal" id="welcomePromoModal" onclick="closeModalOverlay(event, 'welcomePromoModal')">
         <div class="modal-box" onclick="event.stopPropagation()" style="text-align:center; padding: 35px 20px;">
             <div style="font-size:50px; margin-bottom:10px; filter: drop-shadow(0 0 15px rgba(229,193,88,0.5));">🎉</div>
-            <h2 style="color:var(--orange); margin:0 0 10px; font-weight:900; font-size:22px;" id="promoTitle">Welcome</h2>
-            <p style="color:var(--text); font-size:13px; line-height:1.6; margin-bottom: 25px;" id="promoDesc">Thank you for visiting us!</p>
-            <button class="btn-confirm-add" onclick="closeModal('welcomePromoModal')" id="btnPromoCont">Continue</button>
+            <h2 style="color:var(--orange); margin:0 0 10px; font-weight:900; font-size:22px;" id="promoTitle" dir="rtl">أهلاً وسهلاً</h2>
+            <p style="color:var(--text); font-size:13px; line-height:1.6; margin-bottom: 25px;" id="promoDesc" dir="rtl">شكراً لزيارتكم! استمتعوا بأجود أنواع القهوة والحلويات الطازجة المحضّرة خصيصاً لكم.</p>
+            <button class="btn-confirm-add" onclick="closeModal('welcomePromoModal')" id="btnPromoCont" dir="rtl">متابعة</button>
         </div>
     </div>
 
@@ -259,7 +414,23 @@ input,select,textarea{max-width:100%;}
         </div>
     </div>
 
-    <div id="welcomeToast" class="welcome-toast">أهلاً بك ☕ Welcome!</div>
+    <div id="welcomeToast" class="welcome-toast" dir="rtl">☕ أهلاً وسهلاً بك في كوب آند جو</div>
+
+    <div id="launchAd">
+        <img id="launchAdImage" alt="Promotion">
+        <button class="launch-skip" id="launchSkipBtn" onclick="closeLaunchAd()">Skip Intro</button>
+    </div>
+
+    <div class="modal" id="appDialogModal">
+        <div class="app-dialog-card">
+            <div id="appDialogIcon" style="font-size:34px;margin-bottom:8px;">☕</div>
+            <div id="appDialogText" style="font-size:14px;font-weight:800;line-height:1.65;"></div>
+            <div class="app-dialog-actions">
+                <button class="app-dialog-cancel" id="appDialogCancel" style="display:none;"></button>
+                <button class="app-dialog-ok" id="appDialogOk">OK</button>
+            </div>
+        </div>
+    </div>
 
     <!-- 🆕 CLEAN SINGLE-LINE HEADER -->
     <div class="header">
@@ -304,6 +475,7 @@ input,select,textarea{max-width:100%;}
         </div>
 
         <!-- DYNAMIC CATEGORY GRID -->
+        <div class="home-section-label"><span id="exploreMenuLabel">✨ اكتشف القائمة</span><span style="font-size:9px;color:var(--muted);" id="tapCategoryLabel">اختر القسم</span></div>
         <div class="home-cat-grid" id="homeGridCats"></div>
 
         <!-- QR CODE -->
@@ -413,10 +585,11 @@ input,select,textarea{max-width:100%;}
         <div class="modal-box" onclick="event.stopPropagation()">
             <button class="close-sheet-btn" style="top:15px; right:15px;" onclick="closeModal('ordersModal')">✕</button>
             <h3 style="color:var(--orange); text-align:center; margin:0 0 15px 0; font-size:18px;" id="lblMyOrders">My Orders</h3>
-            <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
                 <input type="tel" id="trackPhone" class="input-field" placeholder="Mobile Number" style="margin:0;">
                 <button class="btn-confirm-add" style="width:auto; padding:0 20px; font-size:16px;" onclick="fetchOrderHistory()">🔍</button>
             </div>
+            <button class="repeat-order-btn" id="repeatLastOrderBtn" onclick="repeatLastOrder()">🔁 Repeat Last Order</button>
             <div id="liveTrackingArea" style="margin-bottom:15px;"></div>
             <h4 style="color:#fff; border-bottom:1px dashed var(--glass-border-light); padding-bottom:5px; margin:0 0 10px;" id="lblHistory">History</h4>
             <div id="pastOrdersArea" style="max-height: 200px; overflow-y: auto; font-size:12px;"><p style="color:var(--muted); text-align:center;">Search past orders.</p></div>
@@ -443,16 +616,18 @@ input,select,textarea{max-width:100%;}
         firebase.initializeApp(firebaseConfig); const db = firebase.database();
 
         let menuProducts = []; let cart = []; let currentItem = null; let sheetQtyVal = 1; 
-        let isArabic = true; 
+        let isArabic = false; 
         let activeCategory = 'All Items';
         let sliderImages = []; let currentSlide = 0; let slideIntervalId = null;
         let countdownTimer = null; const CANCEL_WINDOW_SEC = 60; let etaInterval = null; let adminWaitTimeMin = 15;
         let myNotifications = JSON.parse(localStorage.getItem('cng_notifs') || '[]'); let adminCategories = [];
         let initialBannersLoaded = false; let lastBannersStr = "";
+        let popularityByName = {}; let popularityRank = [];
+        let launchAdTimer = null; let pendingDialogResolver = null;
 
         const dict = {
-            en: { shopName: "Cup And Go", allItems: "All Items", addBtn: "+ Add", pref: "Quick Preferences", note: "Special Instructions", phNote: "e.g. Extra hot...", orderTitle: "Your Order", phName: "Your Name", phPhone: "Mobile Number", phCar: "Car Number (Optional)", cancel: "Cancel", confirm: "Confirm Order", myOrders: "My Orders", history: "History", phTrack: "Mobile Number", prep: "Preparing...", comp: "Completed", notifTit: "Notifications", navHome: "Home", navCart: "Cart", navAbout: "About", lblQr: "Scan Full Menu", subQr: "Share this QR with friends", readyTit: "Order Ready!", readySub: "Please collect your order at the counter.", aboutDesc: "Welcome to Cup And Go, where passion meets coffee. We serve the finest blends and freshly baked desserts tailored just for you.", succTit: "Order Received!", succMsg: "Your delicious order is being prepared.", lblEta: "Estimated Wait Time", lblMin: "Minutes", btnTrackNow: "Track Order", tagIce: "Extra Ice", tagHot: "Hot 🔥", tagCold: "Cold 🧊", promoTit: "Welcome", promoDesc: "Thank you for visiting us! Enjoy our finest coffee blends and freshly baked desserts tailored just for you.", btnPromoCont: "Continue" },
-            ar: { shopName: "كوب آند جو", allItems: "الكل", addBtn: "+ إضافة", pref: "خيارات سريعة", note: "ملاحظات خاصة", phNote: "مثال: ساخن جداً...", orderTitle: "طلبك", phName: "الاسم", phPhone: "رقم الجوال", phCar: "رقم السيارة (اختياري)", cancel: "إلغاء", confirm: "تأكيد الطلب", myOrders: "طلباتي", history: "السجل", phTrack: "رقم الجوال", prep: "جاري التحضير...", comp: "مكتمل", notifTit: "الإشعارات", navHome: "الرئيسية", navCart: "السلة", navAbout: "حول", lblQr: "امسح القائمة", subQr: "شارك الكود مع أصدقائك", readyTit: "طلبك جاهز!", readySub: "يرجى استلام طلبك من الكاونتر.", aboutDesc: "مرحباً بك في كوب آند جو، حيث يلتقي الشغف بالقهوة. نقدم لك أفضل الخلطات والحلويات الطازجة المخبوزة خصيصاً لك.", succTit: "تم استلام الطلب!", succMsg: "جاري تحضير طلبك اللذيذ.", lblEta: "الوقت المقدر للانتظار", lblMin: "دقائق", btnTrackNow: "تتبع الطلب", tagIce: "زيادة ثلج", tagHot: "ساخن 🔥", tagCold: "بارد 🧊", promoTit: "مرحباً بك", promoDesc: "شكراً لزيارتك! استمتع بأفضل خلطات القهوة والحلويات المخبوزة طازجاً.", btnPromoCont: "متابعة" }
+            en: { shopName: "Cup And Go", allItems: "All Items", addBtn: "+ Add", pref: "Quick Preferences", note: "Special Instructions", phNote: "e.g. Extra hot...", orderTitle: "Your Order", phName: "Your Name", phPhone: "Mobile Number", phCar: "Car Number (Optional)", cancel: "Cancel", confirm: "Confirm Order", myOrders: "My Orders", history: "History", phTrack: "Mobile Number", prep: "Preparing...", comp: "Completed", notifTit: "Notifications", navHome: "Home", navCart: "Cart", navAbout: "About", lblQr: "Scan Full Menu", subQr: "Share this QR with friends", readyTit: "Order Ready!", readySub: "Please collect your order at the counter.", aboutDesc: "Welcome to Cup And Go, where passion meets coffee. We serve the finest blends and freshly baked desserts tailored just for you.", succTit: "Order Received!", succMsg: "Your delicious order is being prepared.", lblEta: "Estimated Wait Time", lblMin: "Minutes", btnTrackNow: "Track Order", tagIce: "Extra Ice", tagHot: "Hot 🔥", tagCold: "Cold 🧊", addFinal: "Add to Cart - ", promoTit: "Welcome", promoDesc: "Thank you for visiting us! Enjoy our finest coffee blends and freshly baked desserts tailored just for you.", btnPromoCont: "Continue", exploreMenu:"Explore Menu", tapCategory:"Choose a category", bestSeller:"BEST SELLER", popular:"POPULAR", skipIntro:"Skip Intro", repeatLast:"🔁 Repeat Last Order", received:"Received", preparing:"Preparing", readyStep:"Ready", soldOut:"SOLD OUT" },
+            ar: { shopName: "كوب آند جو", allItems: "الكل", addBtn: "+ إضافة", pref: "خيارات سريعة", note: "ملاحظات خاصة", phNote: "مثال: ساخن جداً...", orderTitle: "طلبك", phName: "الاسم", phPhone: "رقم الجوال", phCar: "رقم السيارة (اختياري)", cancel: "إلغاء", confirm: "تأكيد الطلب", myOrders: "طلباتي", history: "السجل", phTrack: "رقم الجوال", prep: "جاري التحضير...", comp: "مكتمل", notifTit: "الإشعارات", navHome: "الرئيسية", navCart: "السلة", navAbout: "حول", lblQr: "امسح القائمة", subQr: "شارك الكود مع أصدقائك", readyTit: "طلبك جاهز!", readySub: "يرجى استلام طلبك من الكاونتر.", aboutDesc: "مرحباً بك في كوب آند جو، حيث يلتقي الشغف بالقهوة. نقدم لك أفضل الخلطات والحلويات الطازجة المخبوزة خصيصاً لك.", succTit: "تم استلام الطلب!", succMsg: "جاري تحضير طلبك اللذيذ.", lblEta: "الوقت المقدر للانتظار", lblMin: "دقائق", btnTrackNow: "تتبع الطلب", tagIce: "زيادة ثلج", tagHot: "ساخن 🔥", tagCold: "بارد 🧊", addFinal: "أضف إلى السلة - ", promoTit: "أهلاً وسهلاً", promoDesc: "شكراً لزيارتكم! استمتعوا بأجود أنواع القهوة والحلويات الطازجة المحضّرة خصيصاً لكم.", btnPromoCont: "متابعة", exploreMenu:"اكتشف القائمة", tapCategory:"اختر القسم", bestSeller:"الأكثر طلباً", popular:"رائج", skipIntro:"تخطي المقدمة", repeatLast:"🔁 إعادة آخر طلب", received:"تم الاستلام", preparing:"قيد التحضير", readyStep:"جاهز", soldOut:"غير متوفر" }
         };
 
         function playBeep() { try { let ctx = new (window.AudioContext || window.webkitAudioContext)(); let osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = 800; osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.3); } catch(e) {} }
@@ -474,10 +649,10 @@ input,select,textarea{max-width:100%;}
         }, 1000);
 
         window.onload = () => {
-            if(isArabic) applyTranslations(); 
+            applyTranslations(); 
 
-            setTimeout(() => { let s = document.getElementById('splash-screen'); s.style.opacity = '0'; setTimeout(() => { s.style.display = 'none'; checkWelcomePromo(); }, 500); }, 2500);
-            new QRCode(document.getElementById("qrcode"), { text: MY_QR_MENU_LINK, width: 130, height: 130, colorDark : "#000000", colorLight : "#ffffff" });
+            setTimeout(() => { const s = document.getElementById('splash-screen'); if(s){ s.classList.add('splash-exit'); setTimeout(() => { s.style.display = 'none'; maybeShowLaunchAd(); }, 980); } }, 2550);
+            const qrEl = document.getElementById("qrcode"); if(qrEl){ qrEl.innerHTML = `<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZoAAAGaAQAAAAAefbjOAAAC6ElEQVR4nO2bQY6kMAxFvwcklkHqA9RRUjeYI436SH0DOEofYCSyRAr6s7CTgupVSzVQXTiLiKJ4IkiWY387Qnx7jL++zwAOOeSQQw455NBrQmKjBcYekGtqdcIoLeSaygPXQ5bn0I4QSJKIJMmpsasBDYFg92yqzw1P/k0OPQJKxQGoUwjZ7km/6B/qQY5ankMHQiGDnACSGRzQkMP/eZNDPwHiUDwDkDoicpYnWp5Du0GB5goiMzikjiI9ICId5QpzGYctz6G9oVFE1ASuqaP8mQDEOgGLphpHLc+h/SCNFldS9ngxV0Agg8As3Dyw6/IcOgiSKwAgWTbB935Rl6H3RmnVjRy0PId21yOKFFGSC801pvUjAEyUcD3ipSGzCJWkAACBahuIU0PEqSGHQLtyizgXVBMOpI5AqMlFEsHYH708h/aA1lvCgIaIE7CSpMxblOzTVezTQGEW0651WF0DQDEQ9xHngLaVLlj0oC5D9WxzHhxQg44n/yaHHgaFDL5fMjiEWUycChlAmAVAo+rlz/omh747Sq6BknjewoXiI9QsolfDTwFVPeIWO+bN/2FTAHWLeHlIVUqxyUIIjL//tgSWFkgtJHIRAk2WvZfn0O7QJrLchJeWjG70K48sXx/CvR1Y0buI2lXetlYat4hXh4qPqBJ17ZwCNp7BVeyTQPedtyunEFd2kOF6xMmgJKpZag18lG7dXTlq063rEWeASl0jcKVU6tAeKrIWRb2ucR7opkdYQ10VJcZ+Eds/Pr07/wzQSo8A0GQi9ShTkyV+tADSm1oI916eQ7tDXyPLsk1oPFlF7dvDvmucAqpnurTZUs90ddRJWyxDjSh+yDc59BBovMxi5zUus4hcZindVIufBD4lVH2Edk5Nm5aqh77JoWeESv4QCCABiNNblvgpANBQ4scbzUpS57vGCSDcQklU2dpCyXImuJQ0vK5xBuj+TNf2iuY89FfjPsIhhxxyyCGHHFqNf9XWcX2s3LcXAAAAAElFTkSuQmCC" alt="Cup And Go Menu QR" style="width:130px;height:130px;display:block" aria-label="Scan to open Cup And Go menu">`; qrEl.onclick = () => { try { window.open(MY_QR_MENU_LINK, "_blank"); } catch(e) { location.href = MY_QR_MENU_LINK; } }; qrEl.style.cursor = "pointer"; }
 
             let savedPhone = localStorage.getItem('cng_phone');
             if(savedPhone) {
@@ -488,10 +663,44 @@ input,select,textarea{max-width:100%;}
             updateNotifBadge(); countdownTimer = setInterval(updateCountdowns, 1000);
         };
 
+
+        function appDialog(message, options={}) {
+            return new Promise(resolve => {
+                const m=document.getElementById('appDialogModal');
+                const txt=document.getElementById('appDialogText');
+                const ok=document.getElementById('appDialogOk');
+                const cancel=document.getElementById('appDialogCancel');
+                document.getElementById('appDialogIcon').innerText=options.icon||'☕';
+                txt.innerText=message;
+                ok.innerText=options.okText||(isArabic?'حسناً':'OK');
+                cancel.innerText=options.cancelText||(isArabic?'إلغاء':'Cancel');
+                cancel.style.display=options.confirm?'block':'none';
+                pendingDialogResolver=resolve;
+                ok.onclick=()=>{ closeModal('appDialogModal'); const r=pendingDialogResolver; pendingDialogResolver=null; if(r)r(true); };
+                cancel.onclick=()=>{ closeModal('appDialogModal'); const r=pendingDialogResolver; pendingDialogResolver=null; if(r)r(false); };
+                openModal('appDialogModal');
+            });
+        }
+        function maybeShowLaunchAd(attempt=0){
+            if(!window.__latestCustomerSettings && attempt<6){ setTimeout(()=>maybeShowLaunchAd(attempt+1),250); return; }
+            const settings=window.__latestCustomerSettings||{};
+            const intro=settings.introAd||{};
+            if(intro.enabled && intro.image){
+                const ad=document.getElementById('launchAd'); const img=document.getElementById('launchAdImage');
+                img.src=intro.image; document.getElementById('launchSkipBtn').innerText=isArabic?dict.ar.skipIntro:dict.en.skipIntro;
+                ad.style.display='flex';
+                const sec=Math.max(2,Math.min(10,parseInt(intro.duration)||4));
+                clearTimeout(launchAdTimer); launchAdTimer=setTimeout(closeLaunchAd,sec*1000);
+            } else checkWelcomePromo();
+        }
+        window.closeLaunchAd=function(){
+            clearTimeout(launchAdTimer); const ad=document.getElementById('launchAd');
+            if(ad.style.display!=='none'){ad.style.opacity='0';ad.style.transition='opacity .35s ease';setTimeout(()=>{ad.style.display='none';ad.style.opacity='1';checkWelcomePromo();},350);}
+        };
         function checkWelcomePromo() {
             let seen = sessionStorage.getItem('cng_promo_seen');
             if(!seen) { window.openModal('welcomePromoModal'); sessionStorage.setItem('cng_promo_seen', 'true'); } 
-            else { showToast(isArabic ? "أهلاً بك في كوب آند جو ☕" : "Welcome to Cup And Go ☕"); }
+            else { showToast(isArabic ? "☕ أهلاً وسهلاً بك في كوب آند جو" : "☕ Welcome to Cup And Go"); }
         }
         function showToast(msg) { let t = document.getElementById('welcomeToast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3500); }
 
@@ -522,6 +731,7 @@ input,select,textarea{max-width:100%;}
 
         db.ref('/settings').on('value', snap => {
             let s = snap.val();
+            window.__latestCustomerSettings = s || {};
             if(s) {
                 if(s.shopLogo) { document.getElementById('shopLogo').src = s.shopLogo; document.getElementById('aboutLogo').src = s.shopLogo; }
                 if(!isArabic && s.shopName) { document.getElementById('shopName').innerText = s.shopName; document.getElementById('aboutShopName').innerText = s.shopName; }
@@ -572,15 +782,45 @@ input,select,textarea{max-width:100%;}
 
         db.ref('/products').on('value', snap => { let data = snap.val(); menuProducts = data ? Object.values(data).filter(p => p != null) : []; renderCategories(); renderMenu(); });
 
+        db.ref('/customerOrderHistory').on('value', snap => {
+            const raw=snap.val(); const arr=raw ? (Array.isArray(raw)?raw:Object.values(raw)) : [];
+            const counts={};
+            arr.filter(o=>String(o?.status||'').toLowerCase()==='completed').forEach(o=>{
+                (o.items||[]).forEach(i=>{
+                    const key=String(i.name||'').trim(); if(!key)return;
+                    counts[key]=(counts[key]||0)+(parseInt(i.qty)||1);
+                });
+            });
+            popularityByName=counts;
+            popularityRank=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
+            renderMenu();
+        });
+
         // SLIDER
         function initSlider(banners) {
             let container = document.getElementById('sliderContainer'); let track = document.getElementById('sliderTrack'); let dots = document.getElementById('sliderDots');
             if (!banners || banners.length === 0) { container.style.display = 'none'; clearInterval(slideIntervalId); return; }
             sliderImages = banners; container.style.display = 'block'; track.innerHTML = ''; dots.innerHTML = ''; currentSlide = 0;
-            banners.forEach((img, idx) => { track.innerHTML += `<div class="slide"><img src="${img}"></div>`; dots.innerHTML += `<div class="dot ${idx === 0 ? 'active' : ''}"></div>`; });
+            banners.forEach((img, idx) => { track.innerHTML += `<div class="slide"><img src="${img}" loading="lazy" decoding="async"></div>`; dots.innerHTML += `<div class="dot ${idx === 0 ? 'active' : ''}"></div>`; });
             track.style.transform = `translateX(0%)`; clearInterval(slideIntervalId);
             if (banners.length > 1) { slideIntervalId = setInterval(() => { currentSlide = (currentSlide + 1) % sliderImages.length; track.style.transform = `translateX(${currentSlide * 100 * (isArabic?1:-1)}%)`; document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === currentSlide)); }, 3000); }
         }
+
+
+        // Pause animated banner work while the app is in the background.
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                clearInterval(slideIntervalId);
+            } else if (sliderImages && sliderImages.length > 1) {
+                clearInterval(slideIntervalId);
+                slideIntervalId = setInterval(() => {
+                    currentSlide = (currentSlide + 1) % sliderImages.length;
+                    const track = document.getElementById('sliderTrack');
+                    if(track) track.style.transform = `translateX(${currentSlide * 100 * (isArabic?1:-1)}%)`;
+                    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+                }, 3000);
+            }
+        });
 
         // CATEGORIES TRANSLATION LOGIC
         function getCatTranslation(cat) {
@@ -641,10 +881,21 @@ input,select,textarea{max-width:100%;}
                 if(!hasAnyItems) grid.innerHTML = `<p style="color:var(--muted);grid-column:span 2;text-align:center;">No items found.</p>`;
             } else { let filtered = menuProducts.filter(p => p.category === activeCategory); if(filtered.length === 0) { grid.innerHTML = `<p style="color:var(--muted);grid-column:span 2;text-align:center;">No items found.</p>`; return; } renderProductsToGrid(filtered, grid); }
         }
-        function renderProductsToGrid(itemsArray, gridElement) { itemsArray.forEach((p, index) => { let iconHtml = (p.icon && p.icon.length > 15) ? `<img src="${p.icon}" class="item-img">` : `<div class="item-icon-fallback">${p.icon || '☕'}</div>`; gridElement.innerHTML += `<div class="item-card">${iconHtml}<div class="item-info"><div class="item-name">${p.name}</div><div class="item-bottom"><div class="item-price">${p.price} SR</div><button class="btn-add" onclick="openItemOptions(${p.id})">${dict[isArabic?'ar':'en'].addBtn}</button></div></div></div>`; }); }
+        function renderProductsToGrid(itemsArray, gridElement) {
+            itemsArray.forEach((p, index) => {
+                const unavailable=!!(p.customerUnavailable||p.soldOut||p.available===false);
+                let iconHtml = (p.icon && p.icon.length > 15) ? `<img src="${p.icon}" class="item-img" loading="lazy" decoding="async">` : `<div class="item-icon-fallback">${p.icon || '☕'}</div>`;
+                const rank=popularityRank.indexOf(String(p.name||''));
+                let badge='';
+                if(rank===0 && (popularityByName[p.name]||0)>0) badge=`<div class="bestseller-badge">${isArabic?dict.ar.bestSeller:dict.en.bestSeller}</div>`;
+                else if(rank>0 && rank<3) badge=`<div class="popular-badge">${isArabic?dict.ar.popular:dict.en.popular}</div>`;
+                const sold=unavailable?`<div class="soldout-badge">${isArabic?dict.ar.soldOut:dict.en.soldOut}</div>`:'';
+                gridElement.innerHTML += `<div class="item-card ${unavailable?'is-soldout':''}" style="position:relative;">${badge}${iconHtml}${sold}<div class="item-info"><div class="item-name">${p.name}</div><div class="item-bottom"><div class="item-price">${p.price} SR</div><button class="btn-add" ${unavailable?'disabled':''} onclick="${unavailable?'return false':`openItemOptions(${p.id})`}">${unavailable?(isArabic?dict.ar.soldOut:dict.en.soldOut):dict[isArabic?'ar':'en'].addBtn}</button></div></div></div>`;
+            });
+        }
 
         // BOTTOM SHEET
-        window.openItemOptions = function(id) { currentItem = menuProducts.find(p => p.id === id); if(!currentItem) return; sheetQtyVal = 1; document.getElementById('sheetItemName').innerText = currentItem.name; document.getElementById('sheetItemPrice').innerText = currentItem.price; document.getElementById('sheetQty').innerText = sheetQtyVal; document.getElementById('sheetTotalPrice').innerText = currentItem.price; document.getElementById('sheetSpecialNote').value = ''; document.querySelectorAll('.tag-btn').forEach(btn => btn.classList.remove('selected')); let overlay = document.getElementById('sheetOverlay'); let sheet = document.getElementById('itemSheet'); overlay.style.display = 'block'; setTimeout(() => { overlay.style.opacity = '1'; sheet.classList.add('open'); }, 10); }
+        window.openItemOptions = function(id) { currentItem = menuProducts.find(p => p.id === id); if(!currentItem) return; if(currentItem.customerUnavailable||currentItem.soldOut||currentItem.available===false){showToast(isArabic?'هذا المنتج غير متوفر حالياً':'This item is currently sold out');return;} sheetQtyVal = 1; document.getElementById('sheetItemName').innerText = currentItem.name; document.getElementById('sheetItemPrice').innerText = currentItem.price; document.getElementById('sheetQty').innerText = sheetQtyVal; document.getElementById('sheetTotalPrice').innerText = currentItem.price; document.getElementById('sheetSpecialNote').value = ''; document.querySelectorAll('.tag-btn').forEach(btn => btn.classList.remove('selected')); let overlay = document.getElementById('sheetOverlay'); let sheet = document.getElementById('itemSheet'); overlay.style.display = 'block'; setTimeout(() => { overlay.style.opacity = '1'; sheet.classList.add('open'); }, 10); }
         window.closeItemSheet = function() { let overlay = document.getElementById('sheetOverlay'); document.getElementById('itemSheet').classList.remove('open'); overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); }
         window.changeSheetQty = function(change) { sheetQtyVal += change; if(sheetQtyVal < 1) sheetQtyVal = 1; document.getElementById('sheetQty').innerText = sheetQtyVal; document.getElementById('sheetTotalPrice').innerText = (currentItem.price * sheetQtyVal).toFixed(2); }
         window.toggleTag = function(btn) { btn.classList.toggle('selected'); }
@@ -669,24 +920,24 @@ input,select,textarea{max-width:100%;}
         window.editProfileUI = function() { document.getElementById('savedProfileView').style.display = 'none'; document.getElementById('manualProfileView').style.display = 'block'; }
 
         // PLACE ORDER WITH TIMER
-        window.placeOrder = function() {
+        window.placeOrder = async function() {
             let isManual = document.getElementById('manualProfileView').style.display !== 'none'; let name, phone, car;
-            if(isManual) { name = document.getElementById('custName').value.trim(); phone = document.getElementById('custPhone').value.trim(); car = document.getElementById('carNumber').value.trim(); if(!name || !phone) return alert(isArabic ? "الاسم ورقم الجوال مطلوبان!" : "Name and Phone required!"); localStorage.setItem('cng_name', name); localStorage.setItem('cng_phone', phone); if(car) localStorage.setItem('cng_car', car); document.getElementById('trackPhone').value = phone; listenForReadyNotification(); listenForCompletedNotification(); } else { name = localStorage.getItem('cng_name') || 'Guest'; phone = localStorage.getItem('cng_phone'); car = localStorage.getItem('cng_car') || ''; }
+            if(isManual) { name = document.getElementById('custName').value.trim(); phone = document.getElementById('custPhone').value.trim(); car = document.getElementById('carNumber').value.trim(); if(!name || !phone) { await appDialog(isArabic ? "الاسم ورقم الجوال مطلوبان!" : "Name and Phone required!", {icon:"⚠️"}); return; } localStorage.setItem('cng_name', name); localStorage.setItem('cng_phone', phone); if(car) localStorage.setItem('cng_car', car); document.getElementById('trackPhone').value = phone; listenForReadyNotification(); listenForCompletedNotification(); } else { name = localStorage.getItem('cng_name') || 'Guest'; phone = localStorage.getItem('cng_phone'); car = localStorage.getItem('cng_car') || ''; }
             let btn = document.getElementById('btnPlaceOrder'); btn.innerText = "Processing..."; btn.disabled = true;
             let total = cart.reduce((s, c) => s + (c.price * c.qty), 0); let cashierInfo = car ? `Car: ${car} (${name})` : `Walk-in: ${name}`; let tNow = Date.now();
-            let orderData = { id: tNow, time: new Date().toLocaleTimeString(), items: cart, total: total, cashier: cashierInfo, customerPhone: phone, carNumber: car || "", timestamp: tNow, status: 'held' };
+            let orderData = { id: tNow, time: new Date().toLocaleTimeString(), items: cart, total: total, cashier: cashierInfo, customerPhone: phone, carNumber: car || "", timestamp: tNow, status: 'pending', orderSource: 'customer', customerName: name };
             // Atomic realtime append: prevents simultaneous customer orders from overwriting each other.
-            db.ref('/heldOrders').transaction(current => {
+            db.ref('/customerOrders').transaction(current => {
                 let held = current || [];
                 if(!Array.isArray(held)) held = Object.values(held);
                 if(!held.some(o => String(o?.id) === String(orderData.id))) held.push(orderData);
                 return held;
             }).then(result => {
                 if(!result.committed) throw new Error('Order was not committed');
-                cart = []; updateCartBadge(); btn.innerText = dict[isArabic?'ar':'en'].confirm; btn.disabled = false;
+                localStorage.setItem('cng_last_order_items', JSON.stringify(orderData.items||[])); cart = []; updateCartBadge(); btn.innerText = dict[isArabic?'ar':'en'].confirm; btn.disabled = false;
                 document.querySelectorAll('.nav-item')[0].click(); 
                 startEtaTimer(adminWaitTimeMin); window.openModal('orderSuccessModal'); addNotification(isArabic ? "تم استلام الطلب!" : "Order placed successfully!");
-            }).catch(e => { alert("Error!"); btn.disabled = false; });
+            }).catch(async e => { await appDialog(isArabic ? "تعذر إرسال الطلب. تحقق من الإنترنت وحاول مرة أخرى." : "Could not send the order. Check your internet and try again.", {icon:"⚠️"}); btn.disabled = false; });
         }
 
         function startEtaTimer(minutes) {
@@ -699,6 +950,23 @@ input,select,textarea{max-width:100%;}
         }
         window.trackMyOrderNow = function() { window.closeModal('orderSuccessModal'); window.openModal('ordersModal'); fetchOrderHistory(); }
 
+        window.repeatLastOrder = async function(){
+            let last=[]; try{last=JSON.parse(localStorage.getItem('cng_last_order_items')||'[]');}catch(e){}
+            if(!Array.isArray(last)||!last.length){showToast(isArabic?'لا يوجد طلب سابق':'No previous order found');return;}
+            const fresh=[]; let unavailableCount=0;
+            last.forEach(old=>{const p=menuProducts.find(x=>String(x.id)===String(old.id)||String(x.name)===String(old.name)); if(!p||p.customerUnavailable||p.soldOut||p.available===false){unavailableCount++;return;} fresh.push({...p,qty:Math.max(1,parseInt(old.qty)||1),note:old.note||''});});
+            if(!fresh.length){await appDialog(isArabic?'عناصر طلبك السابق غير متوفرة حالياً.':'Your previous order items are currently unavailable.',{icon:'⚠️'});return;}
+            cart=fresh; updateCartBadge(); closeModal('ordersModal'); document.querySelectorAll('.nav-item')[2]?.click(); renderCartTab();
+            showToast(unavailableCount?(isArabic?'تمت إضافة العناصر المتوفرة فقط':'Available items added to cart'):(isArabic?'تمت إعادة آخر طلب':'Last order added to cart'));
+        }
+        function orderTimelineHtml(status){
+            const s=String(status||'pending').toLowerCase(); const stage=s==='ready'?2:(['active','processing','accepted'].includes(s)?1:0); const t=isArabic?dict.ar:dict.en;
+            const labels=[t.received,t.preparing,t.readyStep];
+            return `<div class="order-timeline">${labels.map((label,i)=>`<div class="order-step ${i<stage?'done':(i===stage?'current':'')}">${label}</div>`).join('')}</div>`;
+        }
+        let orderTrackingListenerPhone='';
+        let orderTrackingHandler=null;
+
         // ORDERS TRACKING & HISTORY
         window.updateCountdowns = function() {
             let now = Date.now(); document.querySelectorAll('.btn-cancel-timer').forEach(btn => {
@@ -706,10 +974,10 @@ input,select,textarea{max-width:100%;}
                 if (timeLeft > 0) btn.innerHTML = `${isArabic ? 'إلغاء' : 'Cancel'} (${timeLeft}s)`; else btn.style.display = 'none';
             });
         }
-        window.cancelMyOrder = function(orderId) {
-            let cmsg = isArabic ? "هل أنت متأكد من الإلغاء؟" : "Are you sure?";
-            if(!confirm(cmsg)) return;
-            db.ref('/heldOrders').transaction(current => {
+        window.cancelMyOrder = async function(orderId) {
+            let cmsg = isArabic ? "هل أنت متأكد من الإلغاء؟" : "Are you sure you want to cancel?";
+            if(!(await appDialog(cmsg,{confirm:true,icon:"🧾"}))) return;
+            db.ref('/customerOrders').transaction(current => {
                 let held = current || []; if(!Array.isArray(held)) held = Object.values(held);
                 return held.filter(o => String(o?.id) !== String(orderId));
             }).then(() => { showToast(isArabic ? "تم الإلغاء" : "Cancelled!"); addNotification(isArabic ? "تم إلغاء الطلب" : "Order cancelled."); fetchOrderHistory(); });
@@ -720,21 +988,24 @@ input,select,textarea{max-width:100%;}
             let liveArea = document.getElementById('liveTrackingArea'); let pastArea = document.getElementById('pastOrdersArea');
             let tPrep = isArabic ? dict.ar.prep : dict.en.prep;
 
-            db.ref('/heldOrders').on('value', snap => { 
+            if(orderTrackingHandler) db.ref('/customerOrders').off('value',orderTrackingHandler);
+            orderTrackingListenerPhone=phone;
+            orderTrackingHandler = snap => { 
                 let held = snap.val() || []; if(!Array.isArray(held)) held = Object.values(held);
-                let myLive = held.filter(o => o.customerPhone === phone);
+                let myLive = held.filter(o => String(o.customerPhone||'') === String(orderTrackingListenerPhone));
                 if(myLive.length === 0) liveArea.innerHTML = '';
                 else {
                     let html = '';
                     myLive.forEach(o => {
-                        let isReady = o.status === 'Ready'; let statusTxt = isReady ? (isArabic ? '✅ جاهز' : '✅ Ready') : '⏳ ' + tPrep; let colorTxt = isReady ? '#00E676' : '#FF9F0A';
+                        let isReady = String(o.status||'').toLowerCase() === 'ready'; let statusTxt = isReady ? (isArabic ? '✅ جاهز' : '✅ Ready') : '⏳ ' + tPrep; let colorTxt = isReady ? '#00E676' : '#FF9F0A';
                         let diff = Math.floor((Date.now() - o.timestamp) / 1000); let timeLeft = CANCEL_WINDOW_SEC - diff;
-                        let cancelBtnHtml = (!isReady && o.status === 'held' && timeLeft > 0) ? `<button class="btn-cancel-timer" data-time="${o.timestamp}" onclick="cancelMyOrder('${o.id}')">${isArabic ? 'إلغاء' : 'Cancel'} (${timeLeft}s)</button>` : '';
-                        html += `<div class="order-card" style="border-color:${colorTxt};"><div style="display:flex; justify-content:space-between; margin-bottom:5px;"><strong style="color:${colorTxt};">${statusTxt}</strong><b style="color:#fff; font-family:'Inter',sans-serif;">${parseFloat(o.total).toFixed(2)} SR</b></div><div style="font-size:10px; color:var(--muted); font-family:'Inter',sans-serif;">Order #${o.id}</div>${cancelBtnHtml}</div>`;
+                        let cancelBtnHtml = (!isReady && String(o.status||'').toLowerCase() === 'pending' && timeLeft > 0) ? `<button class="btn-cancel-timer" data-time="${o.timestamp}" onclick="cancelMyOrder('${o.id}')">${isArabic ? 'إلغاء' : 'Cancel'} (${timeLeft}s)</button>` : '';
+                        html += `<div class="order-card" style="border-color:${colorTxt};"><div style="display:flex; justify-content:space-between; margin-bottom:5px;"><strong style="color:${colorTxt};">${statusTxt}</strong><b style="color:#fff; font-family:'Inter',sans-serif;">${parseFloat(o.total).toFixed(2)} SR</b></div><div style="font-size:10px; color:var(--muted); font-family:'Inter',sans-serif;">Order #${o.id}</div>${orderTimelineHtml(o.status)}${cancelBtnHtml}</div>`;
                     });
                     liveArea.innerHTML = html; updateCountdowns();
                 }
-            });
+            };
+            db.ref('/customerOrders').on('value',orderTrackingHandler);
 
             Promise.all([ db.ref('/orders').once('value'), db.ref('/history').once('value') ]).then(snapshots => {
                 let todayOrds = snapshots[0].val() || []; if(!Array.isArray(todayOrds)) todayOrds = Object.values(todayOrds);
@@ -761,7 +1032,7 @@ input,select,textarea{max-width:100%;}
         function listenForReadyNotification() {
             let firstPhone = localStorage.getItem('cng_phone'); if(!firstPhone || readyListenerStarted) return;
             readyListenerStarted = true;
-            db.ref('/heldOrders').on('value', snap => {
+            db.ref('/customerOrders').on('value', snap => {
                 const myPhone = localStorage.getItem('cng_phone'); if(!myPhone) return;
                 let held = snap.val() || []; if(!Array.isArray(held)) held = Object.values(held);
                 held.filter(o => String(o.customerPhone||'') === String(myPhone) && String(o.status||'').toLowerCase() === 'ready').forEach(o => triggerReadyPopup(o.id));
@@ -769,7 +1040,7 @@ input,select,textarea{max-width:100%;}
         }
         function triggerReadyPopup(orderId) {
             let notifiedList = JSON.parse(localStorage.getItem('cng_notified') || '[]'); if(notifiedList.includes(orderId)) return;
-            document.getElementById('readyPopup').classList.add('show'); playBeep();
+            document.getElementById('readyPopup').classList.add('show'); playBeep(); setTimeout(playBeep,220); try{navigator.vibrate?.([180,90,180]);}catch(e){}
             notifiedList.push(orderId); localStorage.setItem('cng_notified', JSON.stringify(notifiedList));
             addNotification(isArabic ? `طلبك #${orderId} جاهز!` : `Order #${orderId} is Ready!`); fetchOrderHistory();
         }
@@ -800,7 +1071,7 @@ input,select,textarea{max-width:100%;}
             let t = dict[isArabic ? 'ar' : 'en'];
             if(isArabic) { document.getElementById('shopName').innerText = t.shopName; document.getElementById('aboutShopName').innerText = t.shopName; }
             else { db.ref('/settings/shopName').once('value', s => { document.getElementById('shopName').innerText = s.val() || t.shopName; document.getElementById('aboutShopName').innerText = s.val() || t.shopName; }); }
-            document.getElementById('lblPreferences').innerText = t.pref; document.getElementById('lblSpecialNote').innerText = t.note; document.getElementById('sheetSpecialNote').placeholder = t.phNote; document.getElementById('btnAddFinal').innerHTML = `${t.addFinal}<span id="sheetTotalPrice">${document.getElementById('sheetTotalPrice').innerText}</span> SR`; document.getElementById('lblYourOrder').innerText = t.orderTitle; document.getElementById('custName').placeholder = t.phName; document.getElementById('custPhone').placeholder = t.phPhone; document.getElementById('carNumber').placeholder = t.phCar; document.getElementById('btnPlaceOrder').innerText = t.confirm; document.getElementById('lblMyOrders').innerText = t.myOrders; document.getElementById('lblHistory').innerText = t.history; document.getElementById('trackPhone').placeholder = t.phTrack; document.getElementById('lblNotif').innerText = t.notifTit; document.getElementById('navHome').innerText = t.navHome; document.getElementById('navCart').innerText = t.navCart; document.getElementById('navAbout').innerText = t.navAbout; document.getElementById('lblQrTitle').innerText = t.lblQr; document.getElementById('lblQrSub').innerText = t.subQr; document.getElementById('aboutDesc').innerText = t.aboutDesc; document.getElementById('promoTitle').innerText = t.promoTit; document.getElementById('promoDesc').innerText = t.promoDesc; document.getElementById('succTitle').innerText = t.succTit; document.getElementById('succMsg').innerText = t.succMsg; document.getElementById('lblEta').innerText = t.lblEta; document.getElementById('lblMin').innerText = t.lblMin; document.getElementById('btnTrackNow').innerText = t.btnTrackNow; document.getElementById('btnPromoCont').innerText = t.btnPromoCont;
+            document.getElementById('lblPreferences').innerText = t.pref; document.getElementById('lblSpecialNote').innerText = t.note; document.getElementById('sheetSpecialNote').placeholder = t.phNote; document.getElementById('btnAddFinal').innerHTML = `${t.addFinal || (isArabic ? 'أضف إلى السلة - ' : 'Add to Cart - ')}<span id="sheetTotalPrice">${document.getElementById('sheetTotalPrice').innerText}</span> SR`; document.getElementById('lblYourOrder').innerText = t.orderTitle; document.getElementById('custName').placeholder = t.phName; document.getElementById('custPhone').placeholder = t.phPhone; document.getElementById('carNumber').placeholder = t.phCar; document.getElementById('btnPlaceOrder').innerText = t.confirm; document.getElementById('lblMyOrders').innerText = t.myOrders; document.getElementById('lblHistory').innerText = t.history; document.getElementById('trackPhone').placeholder = t.phTrack; document.getElementById('lblNotif').innerText = t.notifTit; document.getElementById('navHome').innerText = t.navHome; document.getElementById('navCart').innerText = t.navCart; document.getElementById('navAbout').innerText = t.navAbout; document.getElementById('lblQrTitle').innerText = t.lblQr; document.getElementById('lblQrSub').innerText = t.subQr; document.getElementById('aboutDesc').innerText = t.aboutDesc; document.getElementById('succTitle').innerText = t.succTit; document.getElementById('succMsg').innerText = t.succMsg; document.getElementById('lblEta').innerText = t.lblEta; document.getElementById('lblMin').innerText = t.lblMin; document.getElementById('btnTrackNow').innerText = t.btnTrackNow; document.getElementById('exploreMenuLabel').innerText=t.exploreMenu; document.getElementById('tapCategoryLabel').innerText=t.tapCategory; document.getElementById('launchSkipBtn').innerText=t.skipIntro; const rlb=document.getElementById('repeatLastOrderBtn'); if(rlb) rlb.innerText=t.repeatLast;
             document.getElementById('tagIce').innerText = t.tagIce; document.getElementById('tagHot').innerText = t.tagHot; document.getElementById('tagCold').innerText = t.tagCold;
             
             if(sliderImages && sliderImages.length > 1) { let track = document.getElementById('sliderTrack'); track.style.transform = `translateX(${currentSlide * 100 * (isArabic?1:-1)}%)`; }
