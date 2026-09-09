@@ -758,6 +758,37 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
 .cng-pay-option input:checked + .cng-pay-box{border-color:#ff941f;background:#fff4e8;color:#d86400;box-shadow:0 0 0 3px rgba(255,148,31,.10)}
 </style>
 
+
+<style id="final-matched-product-image-display">
+/* FINAL: Customer/Admin matched product-image frame. No crop, no forced zoom. */
+.item-img-wrap{
+  width:100%!important;
+  height:auto!important;
+  aspect-ratio:4/3!important;
+  overflow:hidden!important;
+  position:relative!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  background:#f1f2f4!important;
+  isolation:isolate!important;
+}
+.item-img-wrap::before,.item-img-wrap::after{display:none!important;content:none!important;}
+.item-img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  padding:0!important;
+  margin:0!important;
+  display:block!important;
+  background:#f1f2f4!important;
+  image-rendering:auto!important;
+  -webkit-transform:translateZ(0);
+  transform:translateZ(0);
+  backface-visibility:hidden;
+}
+</style>
 </head>
 <body>
 
