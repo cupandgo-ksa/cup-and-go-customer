@@ -1312,11 +1312,24 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
             if(adminNotificationListenerStarted) return; adminNotificationListenerStarted=true;
             db.ref('/customerNotifications').on('child_added', snap => {
                 const n=snap.val(); if(!n || n.active===false) return;
+                const myPhone=String(localStorage.getItem('cng_phone')||'').trim();
+                const targetPhone=String(n.targetPhone||'').trim();
+                if(targetPhone && targetPhone!==myPhone) return;
                 const seen=JSON.parse(localStorage.getItem('cng_admin_notifs_seen')||'[]');
                 const key=String(n.id||snap.key);
                 if(seen.includes(key)) return;
                 seen.push(key); if(seen.length>100)seen.shift(); localStorage.setItem('cng_admin_notifs_seen',JSON.stringify(seen));
-                const text=(n.title? n.title+': ':'')+(n.message||'');
+                let text=(n.title? n.title+': ':'')+(n.message||'');
+                if(String(n.type||'')==='order_cancelled'){
+                    const reason=isArabic ? (n.cancelReasonAr||n.cancelReasonEn||'') : (n.cancelReasonEn||n.cancelReasonAr||'');
+                    const oid=n.orderId ? `#${n.orderId}` : '';
+                    text=isArabic ? `❌ تم إلغاء طلبك ${oid}${reason?` — السبب: ${reason}`:''}` : `❌ Your order ${oid} was cancelled${reason?` — Reason: ${reason}`:''}`;
+                    showToast(isArabic ? '❌ تم إلغاء طلبك' : '❌ Your order was cancelled');
+                    playBeep();
+                    addNotification(text);
+                    fetchOrderHistory();
+                    return;
+                }
                 addNotification(text);
                 showToast(isArabic ? '🔔 إشعار جديد' : '🔔 New notification');
                 playBeep();
