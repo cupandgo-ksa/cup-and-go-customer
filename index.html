@@ -2918,5 +2918,118 @@ input#trackPhone{
   }
 }
 </style>
+
+<!-- ===== CUP AND GO CUSTOMER LOYALTY v2 ===== -->
+<style id="cng-loyalty-customer-css">
+#cngCustomerLoyaltyCard{margin:0 15px 20px;padding:20px;border-radius:27px;background:linear-gradient(145deg,#552f31,#4b292b);border:1px solid rgba(255,255,255,.10);box-shadow:0 18px 40px rgba(34,16,18,.28);position:relative;overflow:hidden;color:#fff}
+#cngCustomerLoyaltyCard:before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 88% 10%,rgba(255,255,255,.08),transparent 24%);pointer-events:none}
+.cngLHead{display:flex;justify-content:space-between;align-items:center;gap:12px;position:relative;z-index:1}.cngLBrand{display:flex;align-items:center;gap:10px}.cngLBrandLogo{width:48px;height:48px;border-radius:15px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;overflow:hidden}.cngLBrandLogo img{width:100%;height:100%;object-fit:contain}.cngLTitle{font-size:17px;font-weight:900;color:#fff}.cngLSub{font-size:10px;color:rgba(255,255,255,.66);margin-top:2px}.cngLBadge{font-size:10px;font-weight:900;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.10);color:#fff;white-space:nowrap}
+.cngLCupsGrid{margin:22px 4px 18px;position:relative;z-index:1}.cngCupRow{display:flex;justify-content:center;align-items:center;gap:12px;margin-bottom:14px}.cngCupRow:last-child{margin-bottom:0}.cngCupStamp{width:76px;height:76px;flex:0 0 76px;display:flex;align-items:center;justify-content:center;opacity:.23;filter:grayscale(1);transition:.25s;background:transparent!important;border:0!important;box-shadow:none!important}.cngCupStamp.on{opacity:1;filter:none}.cngCupStamp img{width:100%;height:100%;object-fit:contain;background:transparent!important}.cngCupStamp span{font-size:38px}
+.cngLStats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}.cngLStat small{display:block;font-size:9px;color:rgba(255,255,255,.62);font-weight:700}.cngLStat b{display:block;font-size:18px;color:#fff;margin-top:3px}.cngLRewardName{margin-top:13px}.cngLRewardName small{display:block;font-size:9px;color:rgba(255,255,255,.62);font-weight:700}.cngLRewardName b{display:block;font-size:13px;margin-top:3px;color:#fff}
+.cngLProgressTxt{margin-top:14px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.07);font-size:10px;color:rgba(255,255,255,.84);font-weight:800}.cngLProgressTxt strong{color:#ffd36a}
+.cngLQrWrap{margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);display:grid;grid-template-columns:118px minmax(0,1fr);gap:18px;align-items:center}.cngLQrBox{background:#fff;padding:8px;border-radius:17px;width:118px;height:118px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 118px}.cngLQrBox img,.cngLQrBox canvas{width:100px!important;height:100px!important;max-width:100px!important;max-height:100px!important}.cngLQrText{min-width:0}.cngLQrText b{display:block;color:#fff;font-size:11px;line-height:1.35}.cngLQrText span{display:block;color:rgba(255,255,255,.60);font-size:9px;line-height:1.55;margin-top:5px;overflow-wrap:anywhere}
+.cngLSetup{padding:16px;border-radius:16px;background:rgba(255,255,255,.08);text-align:center;font-size:10px;color:rgba(255,255,255,.72);margin-top:16px}.cngLSetup button{margin-top:9px;border:0;border-radius:12px;padding:9px 14px;background:#ffd36a;font-weight:900;color:#3d2224}
+@media(max-width:420px){.cngLQrWrap{grid-template-columns:1fr;gap:12px;text-align:center}.cngLQrBox{width:118px;height:118px;margin:0 auto;flex-basis:auto}.cngLQrText{padding:0 8px}.cngLQrText span{font-size:9px;line-height:1.5}}@media(max-width:420px){.cngCupRow{gap:9px;margin-bottom:11px}.cngCupStamp{width:68px;height:68px;flex-basis:68px}}@media(max-width:360px){.cngCupRow{gap:7px}.cngCupStamp{width:60px;height:60px;flex-basis:60px}}
+</style>
+<script id="cng-loyalty-customer-js">
+(function(){
+ let settings={target:8,rewardName:'Free Coffee',cupImage:''},cust=null,custRef=null,custCb=null;
+ const safeKey=p=>String(p||'').trim().replace(/[^a-zA-Z0-9_-]/g,'_');
+ const phone=()=>String(localStorage.getItem('cng_phone')||'').trim(),name=()=>String(localStorage.getItem('cng_name')||'Customer').trim()||'Customer';
+ function calc(){const t=Math.max(2,Number(settings.target)||8),total=Math.max(0,Number(cust?.totalCups)||0),red=Math.max(0,Number(cust?.redeemedRewards)||0),earned=Math.floor(total/t),avail=Math.max(0,earned-red),used=red*t,raw=Math.max(0,total-used),shown=avail>0?t:(raw%t),left=avail>0?0:Math.max(0,t-shown);return{t,total,red,avail,shown,left}}
+ function findHome(){return document.getElementById('tab-home')||document.querySelector('.tab-content')||document.body}
+ function logoSrc(){const el=document.getElementById('shopLogo');return el&&el.src?el.src:''}
+ function ensureCard(){if(document.getElementById('cngCustomerLoyaltyCard'))return;const host=findHome(),d=document.createElement('div');d.id='cngCustomerLoyaltyCard';d.innerHTML='<div class="cngLHead"><div class="cngLBrand"><div class="cngLBrandLogo" id="cngLBrandLogo">☕</div><div><div class="cngLTitle">Cup And Go</div><div class="cngLSub">Rewards Card</div></div></div><div class="cngLBadge" id="cngCustomerLoyaltyBadge">LOYALTY</div></div><div id="cngCustomerLoyaltyBody"></div>';const qr=host.querySelector('.qr-section');if(qr)qr.insertAdjacentElement('beforebegin',d);else host.appendChild(d);render()}
+ function render(){ensureCard();const body=document.getElementById('cngCustomerLoyaltyBody'),badge=document.getElementById('cngCustomerLoyaltyBadge'),lg=document.getElementById('cngLBrandLogo');if(lg){const s=logoSrc();lg.innerHTML=s?'<img src="'+s+'" alt="logo">':'☕'}if(!body)return;const p=phone();if(!p){badge.textContent='SETUP';body.innerHTML='<div class="cngLSetup">Save your name and mobile number in Profile or while ordering to activate your personal loyalty QR.<br><button onclick="window.switchTab&&switchTab(\'about\')">OPEN PROFILE</button></div>';return}const x=calc();badge.textContent=x.avail>0?'🎁 '+x.avail+' REWARD'+(x.avail>1?'S':''):(x.shown+'/'+x.t);let stamps='';const stampItems=[];for(let i=1;i<=x.t;i++){const on=i<=x.shown,inside=settings.cupImage?'<img src="'+settings.cupImage+'" alt="cup">':'<span>☕</span>';stampItems.push('<div class="cngCupStamp '+(on?'on':'')+'">'+inside+'</div>')}const rows=[];let remaining=stampItems.length,idx=0;while(remaining>0){let size;if(remaining<=4){size=remaining}else if(remaining===5){size=3}else{size=4}rows.push(stampItems.slice(idx,idx+size));idx+=size;remaining-=size}stamps=rows.map(r=>'<div class="cngCupRow">'+r.join('')+'</div>').join('');const msg=x.avail>0?('🎉 '+(settings.rewardName||'Reward')+' available now!'):(x.left+' more cup'+(x.left===1?'':'s')+' to unlock '+(settings.rewardName||'your reward'));body.innerHTML='<div class="cngLCupsGrid">'+stamps+'</div><div class="cngLStats"><div class="cngLStat"><small>POINTS / CUPS</small><b>'+x.shown+'</b></div><div class="cngLStat"><small>TO NEXT REWARD</small><b>'+x.left+'</b></div></div><div class="cngLRewardName"><small>NEXT REWARD</small><b>'+(settings.rewardName||'Reward')+'</b></div><div class="cngLProgressTxt"><strong>'+x.total+'</strong> lifetime cups · '+msg+'</div><div class="cngLQrWrap"><div class="cngLQrBox"><div id="cngPersonalLoyaltyQr"></div></div><div class="cngLQrText"><b>Your personal loyalty QR</b><span>Show this QR to the cashier. Your cup count updates here in real time.</span></div></div>';setTimeout(makeQr,0)}
+ function makeQr(){const el=document.getElementById('cngPersonalLoyaltyQr');if(!el||!phone())return;el.innerHTML='';const txt='CNGLOYALTY|'+encodeURIComponent(phone());try{new QRCode(el,{text:txt,width:90,height:90,correctLevel:QRCode.CorrectLevel.M})}catch(e){el.textContent='QR'}}
+ function attachCustomer(){const p=phone();if(custRef&&custCb)custRef.off('value',custCb);custRef=null;custCb=null;if(!p){cust=null;render();return}custRef=db.ref('/loyaltyCustomers/'+safeKey(p));custCb=s=>{let v=s.val();if(!v){v={phone:p,name:name(),totalCups:0,redeemedRewards:0,createdAt:Date.now()};custRef.set(v);cust=v}else{cust=v;if((v.name||'Customer')!==name()&&name()!=='Customer')custRef.update({name:name(),updatedAt:Date.now()})}render()};custRef.on('value',custCb)}
+ db.ref('/loyaltySettings').on('value',s=>{settings=Object.assign({target:8,rewardName:'Free Coffee',cupImage:''},s.val()||{});render()});
+ window.addEventListener('storage',e=>{if(e.key==='cng_phone'||e.key==='cng_name')attachCustomer()});
+ setInterval(()=>{const p=phone();if((cust?.phone||'')!==p)attachCustomer()},1500);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{ensureCard();attachCustomer()});else{ensureCard();attachCustomer()}
+})();
+</script>
+<!-- ===== END CUP AND GO CUSTOMER LOYALTY ===== -->
+
+
+<style id="cng-customer-register-css">
+#cngCustomerRegisterModal{z-index:2147483646!important;background:rgba(5,5,8,.78)!important;backdrop-filter:blur(14px)!important}
+#cngCustomerRegisterModal .modal-box{max-width:390px!important;background:linear-gradient(160deg,#3a0d15,#1a050a)!important;border:1px solid rgba(229,193,88,.42)!important;border-radius:28px!important;box-shadow:0 24px 70px rgba(0,0,0,.65)!important}
+.cngRegLogo{width:74px;height:74px;border-radius:22px;margin:0 auto 14px;background:rgba(255,255,255,.08);border:1px solid rgba(229,193,88,.35);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:34px}
+.cngRegLogo img{width:100%;height:100%;object-fit:contain}
+.cngRegTitle{text-align:center;color:var(--orange);font-size:22px;font-weight:900;margin-bottom:5px}
+.cngRegSub{text-align:center;color:var(--muted);font-size:11px;line-height:1.6;margin-bottom:18px}
+.cngRegField{width:100%;padding:14px;border-radius:15px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;font-size:14px;margin-bottom:10px;outline:none}
+.cngRegField:focus{border-color:var(--orange)}
+.cngRegBtn{width:100%;padding:14px;border:0;border-radius:15px;background:linear-gradient(135deg,var(--orange),#b89730);color:#1a050a;font-weight:900;font-size:14px}
+.cngRegNote{text-align:center;color:rgba(255,255,255,.45);font-size:9px;line-height:1.5;margin-top:10px}
+</style>
+<div class="modal" id="cngCustomerRegisterModal">
+  <div class="modal-box">
+    <div class="modal-body">
+      <div class="cngRegLogo" id="cngRegLogo">☕</div>
+      <div class="cngRegTitle">Cup And Go Rewards</div>
+      <div class="cngRegSub">Create your customer profile to collect cups, unlock rewards and track your orders.</div>
+      <input id="cngRegName" class="cngRegField" type="text" placeholder="Your name">
+      <input id="cngRegPhone" class="cngRegField" type="tel" inputmode="tel" placeholder="Mobile number">
+      <button class="cngRegBtn" onclick="cngCreateCustomerProfile()">CONTINUE</button>
+      <div class="cngRegNote">Your mobile number identifies your Cup And Go loyalty account.</div>
+    </div>
+  </div>
+</div>
+
+
+<script id="cng-customer-register-js">
+(function(){
+  const key=p=>String(p||'').trim().replace(/[^a-zA-Z0-9_-]/g,'_');
+  const cleanPhone=p=>String(p||'').trim().replace(/\s+/g,'');
+  function logo(){
+    const src=document.getElementById('shopLogo')?.src||'';
+    const el=document.getElementById('cngRegLogo');
+    if(el) el.innerHTML=src?'<img src="'+src+'" alt="Cup And Go">':'☕';
+  }
+  function openReg(){
+    if(cleanPhone(localStorage.getItem('cng_phone'))) return;
+    const m=document.getElementById('cngCustomerRegisterModal'); if(!m)return;
+    logo();
+    const savedName=localStorage.getItem('cng_name')||'';
+    if(savedName) document.getElementById('cngRegName').value=savedName;
+    m.style.display='flex'; requestAnimationFrame(()=>m.classList.add('open'));
+  }
+  window.cngCreateCustomerProfile=function(){
+    const name=(document.getElementById('cngRegName').value||'').trim();
+    const phone=cleanPhone(document.getElementById('cngRegPhone').value);
+    if(!name){ if(typeof showToast==='function')showToast('Please enter your name'); return; }
+    if(phone.length<7){ if(typeof showToast==='function')showToast('Please enter a valid mobile number'); return; }
+    localStorage.setItem('cng_name',name);
+    localStorage.setItem('cng_phone',phone);
+    const now=Date.now(), ref=db.ref('/loyaltyCustomers/'+key(phone));
+    ref.transaction(v=>{
+      v=v||{phone:phone,totalCups:0,redeemedRewards:0,createdAt:now};
+      v.name=name; v.phone=phone; v.lastSeenAt=now; v.updatedAt=now;
+      if(!v.createdAt)v.createdAt=now;
+      return v;
+    },(err,ok,snap)=>{
+      if(err||!ok){ if(typeof showToast==='function')showToast('Could not create profile'); return; }
+      db.ref('/customerRegistry/'+key(phone)).update({
+        name:name,phone:phone,joinedAt:snap.val()?.createdAt||now,lastSeenAt:now,active:true
+      });
+      const m=document.getElementById('cngCustomerRegisterModal');
+      if(m){m.classList.remove('open');setTimeout(()=>m.style.display='none',180);}
+      if(typeof showToast==='function')showToast('✅ Welcome to Cup And Go Rewards');
+      window.dispatchEvent(new Event('storage'));
+    });
+  };
+  function touchExisting(){
+    const phone=cleanPhone(localStorage.getItem('cng_phone')); if(!phone)return;
+    const name=(localStorage.getItem('cng_name')||'Customer').trim()||'Customer',now=Date.now();
+    db.ref('/loyaltyCustomers/'+key(phone)).update({name:name,phone:phone,lastSeenAt:now});
+    db.ref('/customerRegistry/'+key(phone)).update({name:name,phone:phone,lastSeenAt:now,active:true});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{setTimeout(openReg,700);setTimeout(touchExisting,1200)});
+  else{setTimeout(openReg,700);setTimeout(touchExisting,1200)}
+})();
+</script>
+
 </body>
 </html>
