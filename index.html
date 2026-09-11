@@ -2952,82 +2952,47 @@ input#trackPhone{
 <!-- ===== END CUP AND GO CUSTOMER LOYALTY ===== -->
 
 
-<style id="cng-customer-register-css">
-#cngCustomerRegisterModal{z-index:2147483646!important;background:rgba(5,5,8,.78)!important;backdrop-filter:blur(14px)!important}
-#cngCustomerRegisterModal .modal-box{max-width:390px!important;background:linear-gradient(160deg,#3a0d15,#1a050a)!important;border:1px solid rgba(229,193,88,.42)!important;border-radius:28px!important;box-shadow:0 24px 70px rgba(0,0,0,.65)!important}
-.cngRegLogo{width:74px;height:74px;border-radius:22px;margin:0 auto 14px;background:rgba(255,255,255,.08);border:1px solid rgba(229,193,88,.35);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:34px}
-.cngRegLogo img{width:100%;height:100%;object-fit:contain}
-.cngRegTitle{text-align:center;color:var(--orange);font-size:22px;font-weight:900;margin-bottom:5px}
-.cngRegSub{text-align:center;color:var(--muted);font-size:11px;line-height:1.6;margin-bottom:18px}
-.cngRegField{width:100%;padding:14px;border-radius:15px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;font-size:14px;margin-bottom:10px;outline:none}
-.cngRegField:focus{border-color:var(--orange)}
-.cngRegBtn{width:100%;padding:14px;border:0;border-radius:15px;background:linear-gradient(135deg,var(--orange),#b89730);color:#1a050a;font-weight:900;font-size:14px}
-.cngRegNote{text-align:center;color:rgba(255,255,255,.45);font-size:9px;line-height:1.5;margin-top:10px}
-</style>
-<div class="modal" id="cngCustomerRegisterModal">
-  <div class="modal-box">
-    <div class="modal-body">
-      <div class="cngRegLogo" id="cngRegLogo">☕</div>
-      <div class="cngRegTitle">Cup And Go Rewards</div>
-      <div class="cngRegSub">Create your customer profile to collect cups, unlock rewards and track your orders.</div>
-      <input id="cngRegName" class="cngRegField" type="text" placeholder="Your name">
-      <input id="cngRegPhone" class="cngRegField" type="tel" inputmode="tel" placeholder="Mobile number">
-      <button class="cngRegBtn" onclick="cngCreateCustomerProfile()">CONTINUE</button>
-      <div class="cngRegNote">Your mobile number identifies your Cup And Go loyalty account.</div>
-    </div>
-  </div>
+</div>
 </div>
 
 
-<script id="cng-customer-register-js">
+
+<script id="cng-customer-registry-sync-js">
 (function(){
   const key=p=>String(p||'').trim().replace(/[^a-zA-Z0-9_-]/g,'_');
-  const cleanPhone=p=>String(p||'').trim().replace(/\s+/g,'');
-  function logo(){
-    const src=document.getElementById('shopLogo')?.src||'';
-    const el=document.getElementById('cngRegLogo');
-    if(el) el.innerHTML=src?'<img src="'+src+'" alt="Cup And Go">':'☕';
-  }
-  function openReg(){
-    if(cleanPhone(localStorage.getItem('cng_phone'))) return;
-    const m=document.getElementById('cngCustomerRegisterModal'); if(!m)return;
-    logo();
-    const savedName=localStorage.getItem('cng_name')||'';
-    if(savedName) document.getElementById('cngRegName').value=savedName;
-    m.style.display='flex'; requestAnimationFrame(()=>m.classList.add('open'));
-  }
-  window.cngCreateCustomerProfile=function(){
-    const name=(document.getElementById('cngRegName').value||'').trim();
-    const phone=cleanPhone(document.getElementById('cngRegPhone').value);
-    if(!name){ if(typeof showToast==='function')showToast('Please enter your name'); return; }
-    if(phone.length<7){ if(typeof showToast==='function')showToast('Please enter a valid mobile number'); return; }
-    localStorage.setItem('cng_name',name);
-    localStorage.setItem('cng_phone',phone);
-    const now=Date.now(), ref=db.ref('/loyaltyCustomers/'+key(phone));
-    ref.transaction(v=>{
-      v=v||{phone:phone,totalCups:0,redeemedRewards:0,createdAt:now};
-      v.name=name; v.phone=phone; v.lastSeenAt=now; v.updatedAt=now;
-      if(!v.createdAt)v.createdAt=now;
-      return v;
-    },(err,ok,snap)=>{
-      if(err||!ok){ if(typeof showToast==='function')showToast('Could not create profile'); return; }
-      db.ref('/customerRegistry/'+key(phone)).update({
-        name:name,phone:phone,joinedAt:snap.val()?.createdAt||now,lastSeenAt:now,active:true
+  function syncCustomerRegistry(){
+    const phone=String(localStorage.getItem('cng_phone')||'').trim();
+    const name=String(localStorage.getItem('cng_name')||'').trim();
+    if(!phone || !name || typeof db==='undefined') return;
+    const now=Date.now();
+    const regRef=db.ref('/customerRegistry/'+key(phone));
+    regRef.once('value').then(s=>{
+      const old=s.val()||{};
+      return regRef.update({
+        name:name,
+        phone:phone,
+        joinedAt:old.joinedAt||now,
+        lastSeenAt:now,
+        active:true
       });
-      const m=document.getElementById('cngCustomerRegisterModal');
-      if(m){m.classList.remove('open');setTimeout(()=>m.style.display='none',180);}
-      if(typeof showToast==='function')showToast('✅ Welcome to Cup And Go Rewards');
-      window.dispatchEvent(new Event('storage'));
+    }).catch(()=>{});
+    db.ref('/loyaltyCustomers/'+key(phone)).transaction(v=>{
+      v=v||{phone:phone,totalCups:0,redeemedRewards:0,createdAt:now};
+      v.name=name;
+      v.phone=phone;
+      v.lastSeenAt=now;
+      return v;
     });
-  };
-  function touchExisting(){
-    const phone=cleanPhone(localStorage.getItem('cng_phone')); if(!phone)return;
-    const name=(localStorage.getItem('cng_name')||'Customer').trim()||'Customer',now=Date.now();
-    db.ref('/loyaltyCustomers/'+key(phone)).update({name:name,phone:phone,lastSeenAt:now});
-    db.ref('/customerRegistry/'+key(phone)).update({name:name,phone:phone,lastSeenAt:now,active:true});
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{setTimeout(openReg,700);setTimeout(touchExisting,1200)});
-  else{setTimeout(openReg,700);setTimeout(touchExisting,1200)}
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(syncCustomerRegistry,1000));
+  }else{
+    setTimeout(syncCustomerRegistry,1000);
+  }
+  window.addEventListener('storage',e=>{
+    if(e.key==='cng_name'||e.key==='cng_phone')setTimeout(syncCustomerRegistry,100);
+  });
+  setInterval(syncCustomerRegistry,10000);
 })();
 </script>
 
