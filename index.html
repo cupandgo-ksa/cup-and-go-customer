@@ -2942,7 +2942,19 @@ input#trackPhone{
  function ensureCard(){if(document.getElementById('cngCustomerLoyaltyCard'))return;const host=findHome(),d=document.createElement('div');d.id='cngCustomerLoyaltyCard';d.innerHTML='<div class="cngLHead"><div class="cngLBrand"><div class="cngLBrandLogo" id="cngLBrandLogo">☕</div><div><div class="cngLTitle">Cup And Go</div><div class="cngLSub">Rewards Card</div></div></div><div class="cngLBadge" id="cngCustomerLoyaltyBadge">LOYALTY</div></div><div id="cngCustomerLoyaltyBody"></div>';const qr=host.querySelector('.qr-section');if(qr)qr.insertAdjacentElement('beforebegin',d);else host.appendChild(d);render()}
  function render(){ensureCard();const body=document.getElementById('cngCustomerLoyaltyBody'),badge=document.getElementById('cngCustomerLoyaltyBadge'),lg=document.getElementById('cngLBrandLogo');if(lg){const s=logoSrc();lg.innerHTML=s?'<img src="'+s+'" alt="logo">':'☕'}if(!body)return;const p=phone();if(!p){badge.textContent='SETUP';body.innerHTML='<div class="cngLSetup">Save your name and mobile number in Profile or while ordering to activate your personal loyalty QR.<br><button onclick="window.switchTab&&switchTab(\'about\')">OPEN PROFILE</button></div>';return}const x=calc();badge.textContent=x.avail>0?'🎁 '+x.avail+' REWARD'+(x.avail>1?'S':''):(x.shown+'/'+x.t);let stamps='';const stampItems=[];for(let i=1;i<=x.t;i++){const on=i<=x.shown,inside=settings.cupImage?'<img src="'+settings.cupImage+'" alt="cup">':'<span>☕</span>';stampItems.push('<div class="cngCupStamp '+(on?'on':'')+'">'+inside+'</div>')}const rows=[];let remaining=stampItems.length,idx=0;while(remaining>0){let size;if(remaining<=4){size=remaining}else if(remaining===5){size=3}else{size=4}rows.push(stampItems.slice(idx,idx+size));idx+=size;remaining-=size}stamps=rows.map(r=>'<div class="cngCupRow">'+r.join('')+'</div>').join('');const msg=x.avail>0?('🎉 '+(settings.rewardName||'Reward')+' available now!'):(x.left+' more cup'+(x.left===1?'':'s')+' to unlock '+(settings.rewardName||'your reward'));body.innerHTML='<div class="cngLCupsGrid">'+stamps+'</div><div class="cngLStats"><div class="cngLStat"><small>POINTS / CUPS</small><b>'+x.shown+'</b></div><div class="cngLStat"><small>TO NEXT REWARD</small><b>'+x.left+'</b></div></div><div class="cngLRewardName"><small>NEXT REWARD</small><b>'+(settings.rewardName||'Reward')+'</b></div><div class="cngLProgressTxt"><strong>'+x.total+'</strong> lifetime cups · '+msg+'</div><div class="cngLQrWrap"><div class="cngLQrBox"><div id="cngPersonalLoyaltyQr"></div></div><div class="cngLQrText"><b>Your personal loyalty QR</b><span>Show this QR to the cashier. Your cup count updates here in real time.</span></div></div>';setTimeout(makeQr,0)}
  function makeQr(){const el=document.getElementById('cngPersonalLoyaltyQr');if(!el||!phone())return;el.innerHTML='';const txt='CNGLOYALTY|'+encodeURIComponent(phone());try{new QRCode(el,{text:txt,width:90,height:90,correctLevel:QRCode.CorrectLevel.M})}catch(e){el.textContent='QR'}}
- function attachCustomer(){const p=phone();if(custRef&&custCb)custRef.off('value',custCb);custRef=null;custCb=null;if(!p){cust=null;render();return}custRef=db.ref('/loyaltyCustomers/'+safeKey(p));custCb=s=>{let v=s.val();if(!v){v={phone:p,name:name(),totalCups:0,redeemedRewards:0,createdAt:Date.now()};custRef.set(v);cust=v}else{cust=v;if((v.name||'Customer')!==name()&&name()!=='Customer')custRef.update({name:name(),updatedAt:Date.now()})}render()};custRef.on('value',custCb)}
+ function attachCustomer(){
+   const p=phone();
+   if(custRef&&custCb)custRef.off('value',custCb);
+   custRef=null;custCb=null;
+   if(!p){cust=null;render();return}
+   custRef=db.ref('/loyaltyCustomers/'+safeKey(p));
+   custCb=s=>{
+     const v=s.val();
+     cust=v||{phone:p,name:name(),totalCups:0,redeemedRewards:0};
+     render();
+   };
+   custRef.on('value',custCb);
+ }
  db.ref('/loyaltySettings').on('value',s=>{settings=Object.assign({target:8,rewardName:'Free Coffee',cupImage:''},s.val()||{});render()});
  window.addEventListener('storage',e=>{if(e.key==='cng_phone'||e.key==='cng_name')attachCustomer()});
  setInterval(()=>{const p=phone();if((cust?.phone||'')!==p)attachCustomer()},1500);
@@ -2976,14 +2988,7 @@ input#trackPhone{
         active:true
       });
     }).catch(()=>{});
-    db.ref('/loyaltyCustomers/'+key(phone)).transaction(v=>{
-      v=v||{phone:phone,totalCups:0,redeemedRewards:0,createdAt:now};
-      v.name=name;
-      v.phone=phone;
-      v.lastSeenAt=now;
-      return v;
-    });
-  }
+}
   if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded',()=>setTimeout(syncCustomerRegistry,1000));
   }else{
@@ -2993,6 +2998,13 @@ input#trackPhone{
     if(e.key==='cng_name'||e.key==='cng_phone')setTimeout(syncCustomerRegistry,100);
   });
   setInterval(syncCustomerRegistry,10000);
+})();
+</script>
+
+
+<script id="cng-loyalty-readonly-guard">
+(function(){
+  window.CNG_CUSTOMER_LOYALTY_READ_ONLY = true;
 })();
 </script>
 
