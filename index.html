@@ -1507,7 +1507,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         // PLACE ORDER WITH TIMER
         window.placeOrder = async function() {
             let isManual = document.getElementById('manualProfileView').style.display !== 'none'; let name, phone, car;
-            if(isManual) { name = document.getElementById('custName').value.trim(); phone = document.getElementById('custPhone').value.trim(); car = document.getElementById('carNumber').value.trim(); if(!name || !phone) { await appDialog(isArabic ? "الاسم ورقم الجوال مطلوبان!" : "Name and Phone required!", {icon:"⚠️"}); return; } localStorage.setItem('cng_name', name); localStorage.setItem('cng_phone', phone); if(car) localStorage.setItem('cng_car', car); document.getElementById('trackPhone').value = phone; listenForReadyNotification(); listenForCompletedNotification(); } else { name = localStorage.getItem('cng_name') || 'Guest'; phone = localStorage.getItem('cng_phone'); car = localStorage.getItem('cng_car') || ''; }
+            if(isManual) { name = document.getElementById('custName').value.trim(); phone = document.getElementById('custPhone').value.trim(); car = document.getElementById('carNumber').value.trim(); if(!name || !phone) { await appDialog(isArabic ? "الاسم ورقم الجوال مطلوبان!" : "Name and Phone required!", {icon:"⚠️"}); return; } localStorage.setItem('cng_name', name); localStorage.setItem('cng_phone', phone); if(window.cngSyncCustomerRegistry)setTimeout(window.cngSyncCustomerRegistry,0); if(car) localStorage.setItem('cng_car', car); document.getElementById('trackPhone').value = phone; listenForReadyNotification(); listenForCompletedNotification(); } else { name = localStorage.getItem('cng_name') || 'Guest'; phone = localStorage.getItem('cng_phone'); car = localStorage.getItem('cng_car') || ''; }
             const paymentChoice=document.querySelector('input[name="checkoutPaymentMethod"]:checked');
             if(!paymentChoice){ await appDialog(isArabic ? "اختر طريقة الدفع: نقداً أو بطاقة" : "Please choose payment method: Cash or Card", {icon:"💳"}); return; }
             const paymentMethod=paymentChoice.value;
@@ -1556,64 +1556,110 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         }
 
         function fetchOrderHistory() {
-            let phone = document.getElementById('trackPhone').value.trim(); if(!phone) return;
-            let liveArea = document.getElementById('liveTrackingArea'); let pastArea = document.getElementById('pastOrdersArea');
+            let phone = document.getElementById('trackPhone').value.trim();
+            if(!phone) return;
+
+            let liveArea = document.getElementById('liveTrackingArea');
+            let pastArea = document.getElementById('pastOrdersArea');
             let tPrep = isArabic ? dict.ar.prep : dict.en.prep;
 
-            db.ref('/customerOrders').on('value', snap => { 
-                let held = snap.val() || []; if(!Array.isArray(held)) held = Object.values(held);
-                let myLive = held.filter(o => o.customerPhone === phone);
-                if(myLive.length === 0) liveArea.innerHTML = '';
-                else {
-                    let html = '';
-                    myLive.forEach(o => {
-                        const st = String(o.status||'new').toLowerCase();
-                        const isReady = st === 'ready';
-                        let statusTxt, statusSub, colorTxt, stagePct, stageNo;
-                        if(st === 'new'){
-                            statusTxt = isArabic ? 'بانتظار تأكيد الكاشير' : 'Waiting for cashier';
-                            statusSub = isArabic ? 'تم إرسال طلبك إلى الكاشير' : 'Order sent to cashier for confirmation';
-                            colorTxt = '#ff3b30'; stagePct = 33; stageNo = 1;
-                        } else if(['pending','active','accepted','processing'].includes(st)){
-                            statusTxt = isArabic ? 'جاري التحضير...' : 'Preparing...';
-                            statusSub = isArabic ? 'أكد الكاشير الطلب ويجري تحضيره الآن' : 'Cashier accepted your order · Now preparing';
-                            colorTxt = '#ff3b30'; stagePct = 66; stageNo = 2;
-                        } else if(isReady){
-                            statusTxt = isArabic ? 'جاهز للاستلام' : 'Ready for pickup';
-                            statusSub = isArabic ? 'يرجى استلام طلبك من الكاونتر' : 'Please collect your order at the counter';
-                            colorTxt = '#ff3b30'; stagePct = 100; stageNo = 3;
-                        } else {
-                            statusTxt = tPrep; statusSub = ''; colorTxt = '#ff3b30'; stagePct = 66; stageNo = 2;
-                        }
-                        let diff = Math.floor((Date.now() - o.timestamp) / 1000); let timeLeft = CANCEL_WINDOW_SEC - diff;
-                        let cancelBtnHtml = (st === 'new' && timeLeft > 0) ? `<button class="btn-cancel-timer" data-time="${o.timestamp}" onclick="cancelMyOrder('${o.id}')">${isArabic ? 'إلغاء' : 'Cancel'} (${timeLeft}s)</button>` : '';
-                        html += `<div class="order-card" style="border-color:${colorTxt};"><div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:5px;"><strong class="cng-live-status" style="color:${colorTxt};"><span>${statusTxt}</span></strong><b style="color:#fff; font-family:'Inter',sans-serif;white-space:nowrap;">${parseFloat(o.total).toFixed(2)} SR</b></div><div class="cng-three-step-track red-live-track stage-${stageNo||1}" style="margin:12px 0 9px;">
-<div style="position:relative;height:4px;background:rgba(255,255,255,.12);border-radius:99px;margin:0 12px 8px;"><div style="height:100%;width:${stagePct}%;background:${colorTxt};border-radius:99px;transition:width .35s ease;"></div></div>
+            const liveRef = db.ref('/customerOrders');
+            if(window.__cngLiveOrdersRef && window.__cngLiveOrdersCb) {
+                window.__cngLiveOrdersRef.off('value', window.__cngLiveOrdersCb);
+            }
+            window.__cngLiveOrdersRef = liveRef;
+            window.__cngLiveOrdersCb = snap => {
+                let held = snap.val() || [];
+                if(!Array.isArray(held)) held = Object.values(held);
+                let myLive = held.filter(o => o && String(o.customerPhone||'') === String(phone));
+
+                if(myLive.length === 0) {
+                    liveArea.innerHTML = '';
+                    return;
+                }
+
+                let html = '';
+                myLive.forEach(o => {
+                    const st = String(o.status||'new').toLowerCase();
+                    const isReady = st === 'ready';
+                    let statusTxt, statusSub, colorTxt, stagePct, stageNo;
+
+                    if(st === 'new'){
+                        statusTxt = isArabic ? 'بانتظار تأكيد الكاشير' : 'Waiting for cashier';
+                        statusSub = isArabic ? 'تم إرسال طلبك إلى الكاشير' : 'Order sent to cashier for confirmation';
+                        colorTxt = '#ff3b30'; stagePct = 33; stageNo = 1;
+                    } else if(['pending','active','accepted','processing'].includes(st)){
+                        statusTxt = isArabic ? 'جاري التحضير...' : 'Preparing...';
+                        statusSub = isArabic ? 'أكد الكاشير الطلب ويجري تحضيره الآن' : 'Cashier accepted your order · Now preparing';
+                        colorTxt = '#ff3b30'; stagePct = 66; stageNo = 2;
+                    } else if(isReady){
+                        statusTxt = isArabic ? 'جاهز للاستلام' : 'Ready for pickup';
+                        statusSub = isArabic ? 'يرجى استلام طلبك من الكاونتر' : 'Please collect your order at the counter';
+                        colorTxt = '#ff3b30'; stagePct = 100; stageNo = 3;
+                    } else {
+                        statusTxt = tPrep; statusSub = ''; colorTxt = '#ff3b30'; stagePct = 66; stageNo = 2;
+                    }
+
+                    let diff = Math.floor((Date.now() - o.timestamp) / 1000);
+                    let timeLeft = CANCEL_WINDOW_SEC - diff;
+                    let cancelBtnHtml = (st === 'new' && timeLeft > 0)
+                        ? `<button class="btn-cancel-timer" data-time="${o.timestamp}" onclick="cancelMyOrder('${o.id}')">${isArabic ? 'إلغاء' : 'Cancel'} (${timeLeft}s)</button>`
+                        : '';
+
+                    html += `<div class="order-card" style="border-color:${colorTxt};">
+<div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:5px;">
+<strong class="cng-live-status" style="color:${colorTxt};"><span>${statusTxt}</span></strong>
+<b style="color:#fff;font-family:'Inter',sans-serif;white-space:nowrap;">${parseFloat(o.total||0).toFixed(2)} SR</b>
+</div>
+<div class="cng-three-step-track red-live-track stage-${stageNo||1}" style="margin:12px 0 9px;">
+<div style="position:relative;height:4px;background:rgba(255,255,255,.12);border-radius:99px;margin:0 12px 8px;">
+<div style="height:100%;width:${stagePct}%;background:${colorTxt};border-radius:99px;transition:width .35s ease;"></div>
+</div>
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;text-align:center;font-size:9px;line-height:1.25;">
 <div class="step-one" style="color:${stagePct>=33?'#252b37':'var(--muted)'};"><b class="step-num">1</b>${isArabic?'تم استلام الطلب':'Order Received'}</div>
 <div class="step-two" style="color:${stagePct>=66?'#252b37':'var(--muted)'};"><b class="step-num">2</b>${isArabic?'جاري التحضير':'Preparing'}</div>
 <div class="step-three" style="color:${stagePct>=100?'#252b37':'var(--muted)'};"><b class="step-num">3</b>${isArabic?'جاهز للاستلام':'Ready for Pickup'}</div>
-</div></div>${statusSub?`<div style="font-size:10px;color:var(--muted);margin-bottom:5px;line-height:1.45;">${statusSub}</div>`:''}<div style="font-size:10px; color:var(--muted); font-family:'Inter',sans-serif;">Order #${o.id}</div>${cancelBtnHtml}</div>`;
-                    });
-                    liveArea.innerHTML = html; updateCountdowns();
-                }
-            });
+</div></div>
+${statusSub?`<div style="font-size:10px;color:var(--muted);margin-bottom:5px;line-height:1.45;">${statusSub}</div>`:''}
+<div style="font-size:10px;color:var(--muted);font-family:'Inter',sans-serif;">Order #${o.id}</div>
+${cancelBtnHtml}</div>`;
+                });
 
-            Promise.all([ db.ref('/orders').once('value'), db.ref('/history').once('value') ]).then(snapshots => {
-                let todayOrds = snapshots[0].val() || []; if(!Array.isArray(todayOrds)) todayOrds = Object.values(todayOrds);
-                let pastHist = snapshots[1].val() || []; if(!Array.isArray(pastHist)) pastHist = Object.values(pastHist);
-                let allCompleted = [...todayOrds]; pastHist.forEach(d => { if(d.ordersData) allCompleted = allCompleted.concat(d.ordersData); });
-                let myPast = allCompleted.filter(o => o.customerPhone === phone).reverse();
-                if(myPast.length === 0) pastArea.innerHTML = `<p style="color:var(--muted); text-align:center;">No past orders.</p>`;
-                else {
-                    let html = '';
-                    myPast.forEach(o => {
-                        let itemsTxt = (o.items || []).map(i => `${i.qty}x ${i.name}`).join(', ');
-                        html += `<div class="order-card"><div style="display:flex; justify-content:space-between; margin-bottom:3px;"><strong style="color:#00E676;">✅ ${isArabic ? dict.ar.comp : dict.en.comp}</strong><b style="color:var(--orange); font-family:'Inter',sans-serif;">${parseFloat(o.total).toFixed(2)} SR</b></div><div style="font-size:11px; color:var(--muted);">${itemsTxt}</div><div style="font-size:9px; color:#888; margin-top:3px; font-family:'Inter',sans-serif;">${o.time || new Date(o.timestamp).toLocaleDateString()}</div></div>`;
-                    });
-                    pastArea.innerHTML = html;
+                liveArea.innerHTML = html;
+                updateCountdowns();
+            };
+            liveRef.on('value', window.__cngLiveOrdersCb);
+
+            const histRef = db.ref('/customerOrderHistory');
+            if(window.__cngPastHistoryRef && window.__cngPastHistoryCb) {
+                window.__cngPastHistoryRef.off('value', window.__cngPastHistoryCb);
+            }
+            window.__cngPastHistoryRef = histRef;
+            window.__cngPastHistoryCb = snap => {
+                const raw = snap.val();
+                let arr = raw ? (Array.isArray(raw) ? raw.filter(Boolean) : Object.values(raw)) : [];
+                let myPast = arr.filter(o => o && String(o.customerPhone||'') === String(phone))
+                                .sort((a,b) => Number(b.completedAt||b.timestamp||0) - Number(a.completedAt||a.timestamp||0));
+
+                if(myPast.length === 0) {
+                    pastArea.innerHTML = `<p style="color:var(--muted); text-align:center;">No past orders.</p>`;
+                    return;
                 }
-            });
+
+                pastArea.innerHTML = myPast.map(o => {
+                    let itemsTxt = (o.items || []).map(i => `${i.qty}x ${i.name}`).join(', ');
+                    const when = o.time || new Date(Number(o.completedAt||o.timestamp||Date.now())).toLocaleString();
+                    return `<div class="order-card">
+<div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+<strong style="color:#00E676;">✅ ${isArabic ? dict.ar.comp : dict.en.comp}</strong>
+<b style="color:var(--orange);font-family:'Inter',sans-serif;">${parseFloat(o.total||0).toFixed(2)} SR</b>
+</div>
+<div style="font-size:11px;color:var(--muted);">${itemsTxt}</div>
+<div style="font-size:9px;color:#888;margin-top:3px;font-family:'Inter',sans-serif;">${when}</div>
+</div>`;
+                }).join('');
+            };
+            histRef.on('value', window.__cngPastHistoryCb);
         }
 
         // Ready / completed listener guards (avoid duplicate realtime subscriptions)
@@ -1640,21 +1686,47 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
 
         // Completed Order Notification (NEW)
         function listenForCompletedNotification() {
-            let myPhone = localStorage.getItem('cng_phone'); if(!myPhone || completedListenerStarted) return;
-            completedListenerStarted = true;
-            
-            db.ref('/orders').on('child_added', snap => {
-                let o = snap.val();
-                if(o && String(o.customerPhone||'') === String(myPhone)) {
-                    let completedNotified = JSON.parse(localStorage.getItem('cng_completed_notified') || '[]');
-                    if(!completedNotified.includes(o.id)) {
-                        completedNotified.push(o.id); localStorage.setItem('cng_completed_notified', JSON.stringify(completedNotified));
-                        showToast(isArabic ? "✅ تم اكتمال طلبك! شكراً لك." : "✅ Order Completed! Thank you.");
-                        addNotification(isArabic ? `طلبك #${o.id} مكتمل بنجاح!` : `Order #${o.id} is Completed!`);
-                        playBeep(); fetchOrderHistory(); 
-                    }
-                }
-            });
+            let myPhone = localStorage.getItem('cng_phone');
+            if(!myPhone) return;
+
+            const ref = db.ref('/customerOrderHistory');
+
+            if(window.__cngCompletedHistoryRef && window.__cngCompletedHistoryCb) {
+                window.__cngCompletedHistoryRef.off('child_added', window.__cngCompletedHistoryCb);
+            }
+
+            ref.once('value').then(seedSnap => {
+                const raw = seedSnap.val();
+                const arr = raw ? (Array.isArray(raw) ? raw.filter(Boolean) : Object.values(raw)) : [];
+                let completedNotified = JSON.parse(localStorage.getItem('cng_completed_notified') || '[]');
+
+                arr.filter(o => o && String(o.customerPhone||'') === String(myPhone))
+                   .forEach(o => {
+                       if(o.id != null && !completedNotified.includes(o.id)) completedNotified.push(o.id);
+                   });
+
+                localStorage.setItem('cng_completed_notified', JSON.stringify(completedNotified));
+
+                window.__cngCompletedHistoryRef = ref;
+                window.__cngCompletedHistoryCb = snap => {
+                    const o = snap.val();
+                    const currentPhone = localStorage.getItem('cng_phone');
+                    if(!o || String(o.customerPhone||'') !== String(currentPhone||'')) return;
+
+                    let notified = JSON.parse(localStorage.getItem('cng_completed_notified') || '[]');
+                    if(notified.includes(o.id)) return;
+
+                    notified.push(o.id);
+                    localStorage.setItem('cng_completed_notified', JSON.stringify(notified));
+                    showToast(isArabic ? "✅ تم اكتمال طلبك! شكراً لك." : "✅ Order Completed! Thank you.");
+                    addNotification(isArabic ? `طلبك #${o.id} مكتمل بنجاح!` : `Order #${o.id} is Completed!`);
+                    playBeep();
+                    fetchOrderHistory();
+                };
+
+                ref.on('child_added', window.__cngCompletedHistoryCb);
+                completedListenerStarted = true;
+            }).catch(() => { completedListenerStarted = false; });
         }
 
         // Translate
@@ -1726,7 +1798,7 @@ html.lang-ar .profile-page-wrap{text-align:right!important}html.lang-ar .profile
     const ni=document.getElementById('profileNameInput'),pi=document.getElementById('profilePhoneInput'),ci=document.getElementById('profileCarInput'); if(ni)ni.value=n;if(pi)pi.value=p;if(ci)ci.value=c;
   };
   window.toggleProfileEdit=function(show){const a=document.getElementById('profileSavedState'),b=document.getElementById('profileEditState');if(a)a.style.display=show?'none':'grid';if(b)b.style.display=show?'grid':'none';if(show)renderCustomerProfile();};
-  window.saveCustomerProfile=function(){const n=(document.getElementById('profileNameInput')?.value||'').trim(),p=(document.getElementById('profilePhoneInput')?.value||'').trim(),c=(document.getElementById('profileCarInput')?.value||'').trim();if(!n||!p){appDialog(isArabic?'الاسم ورقم الجوال مطلوبان':'Name and mobile number are required',{icon:'⚠️'});return;}localStorage.setItem('cng_name',n);localStorage.setItem('cng_phone',p);if(c)localStorage.setItem('cng_car',c);else localStorage.removeItem('cng_car');const tp=document.getElementById('trackPhone');if(tp)tp.value=p;renderCustomerProfile();toggleProfileEdit(false);listenForReadyNotification();listenForCompletedNotification();showToast(isArabic?'✅ تم حفظ الملف الشخصي':'✅ Profile saved');};
+  window.saveCustomerProfile=function(){const n=(document.getElementById('profileNameInput')?.value||'').trim(),p=(document.getElementById('profilePhoneInput')?.value||'').trim(),c=(document.getElementById('profileCarInput')?.value||'').trim();if(!n||!p){appDialog(isArabic?'الاسم ورقم الجوال مطلوبان':'Name and mobile number are required',{icon:'⚠️'});return;}localStorage.setItem('cng_name',n);localStorage.setItem('cng_phone',p);if(window.cngSyncCustomerRegistry)setTimeout(window.cngSyncCustomerRegistry,0);if(c)localStorage.setItem('cng_car',c);else localStorage.removeItem('cng_car');const tp=document.getElementById('trackPhone');if(tp)tp.value=p;renderCustomerProfile();toggleProfileEdit(false);listenForReadyNotification();listenForCompletedNotification();showToast(isArabic?'✅ تم حفظ الملف الشخصي':'✅ Profile saved');};
   function polishTranslations(){
     v5Text('navMenu','Menu','القائمة');v5Text('navOrders','Orders','الطلبات');v5Text('navAbout','Profile','الملف');
     v5Text('profileEyebrow','CUSTOMER PROFILE','ملف العميل');v5Text('profileDetailsTitle','Your details','بياناتك');v5Text('profileDetailsSub','Saved for faster checkout & order tracking','محفوظة للدفع السريع وتتبع الطلب');v5Text('profileEditBtn','Edit','تعديل');v5Text('profileNameLabel','Name','الاسم');v5Text('profilePhoneLabel','Mobile','الجوال');v5Text('profileCarLabel','Car number','رقم السيارة');v5Text('profileCancelBtn','Cancel','إلغاء');v5Text('profileSaveBtn','Save profile','حفظ الملف');v5Text('profileOrdersBtn','My Orders','طلباتي');v5Text('profileNotifBtn','Notifications','الإشعارات');v5Text('profileWhatsappBtn','WhatsApp','واتساب');v5Text('profileAboutTitle','About Cup And Go','عن كوب آند جو');
@@ -2831,7 +2903,7 @@ html[dir="rtl"] #greetingMsg{
  function render(d){var a=document.getElementById('cngChatMessages');if(!a)return;var m=d&&d.messages?Object.values(d.messages):[];m.sort(function(x,y){return(x.timestamp||0)-(y.timestamp||0);});if(!m.length){a.innerHTML='<div style="text-align:center;color:#9299a4;padding:45px 14px;font-size:12px">☕ Send us a message. We will reply here.</div>';return;}var h='';m.forEach(function(x){h+='<div class="cngMsgRow '+(x.sender==='customer'?'me':'them')+'"><div class="cngMsg"><div>'+esc(x.text)+'</div><div class="cngMsgTime">'+tm(x.timestamp)+'</div></div></div>';});a.innerHTML=h;setTimeout(function(){a.scrollTop=a.scrollHeight;},0);}
  function listen(){if(chatRef&&chatListener)chatRef.off('value',chatListener);var p=prof();if(!p.phone)return;chatRef=db.ref('/customerChats/'+key(p.phone));chatListener=function(s){var d=s.val()||{};render(d);badge(d.unreadCustomer||0);if(document.getElementById('cngCustomerChatModal').classList.contains('open')&&Number(d.unreadCustomer)>0)chatRef.update({unreadCustomer:0});};chatRef.on('value',chatListener);}
  window.cngOpenCustomerChat=function(){var p=prof(),setup=document.getElementById('cngChatSetup'),comp=document.getElementById('cngChatComposer');var logo=document.getElementById('shopLogo');if(logo)document.getElementById('cngChatShopLogo').src=logo.src;if(!p.phone){setup.style.display='block';comp.style.display='none';document.getElementById('cngChatName').value=p.name;}else{setup.style.display='none';comp.style.display='flex';listen();}openModal('cngCustomerChatModal');if(chatRef)chatRef.update({unreadCustomer:0});};
- window.cngSaveChatProfile=function(){var n=document.getElementById('cngChatName').value.trim(),p=document.getElementById('cngChatPhone').value.trim();if(!n||!p){if(typeof showToast==='function')showToast('Name and mobile number required');return;}localStorage.setItem('cng_name',n);localStorage.setItem('cng_phone',p);document.getElementById('cngChatSetup').style.display='none';document.getElementById('cngChatComposer').style.display='flex';listen();};
+ window.cngSaveChatProfile=function(){var n=document.getElementById('cngChatName').value.trim(),p=document.getElementById('cngChatPhone').value.trim();if(!n||!p){if(typeof showToast==='function')showToast('Name and mobile number required');return;}localStorage.setItem('cng_name',n);localStorage.setItem('cng_phone',p);if(window.cngSyncCustomerRegistry)setTimeout(window.cngSyncCustomerRegistry,0);document.getElementById('cngChatSetup').style.display='none';document.getElementById('cngChatComposer').style.display='flex';listen();};
  window.cngCustomerSendMessage=function(){var p=prof(),i=document.getElementById('cngChatInput'),m=(i.value||'').trim();if(!p.phone){cngOpenCustomerChat();return;}if(!m)return;i.value='';var r=db.ref('/customerChats/'+key(p.phone)),now=Date.now();r.child('messages').push({sender:'customer',text:m,timestamp:now});r.transaction(function(d){d=d||{};d.customerName=p.name||'Customer';d.customerPhone=p.phone;d.updatedAt=now;d.lastMessage=m;d.lastSender='customer';d.unreadAdmin=(Number(d.unreadAdmin)||0)+1;d.unreadCustomer=0;return d;});};
  document.addEventListener('DOMContentLoaded',function(){if(prof().phone)listen();});setTimeout(function(){if(prof().phone)listen();},800);
 })();
@@ -2989,6 +3061,7 @@ input#trackPhone{
       });
     }).catch(()=>{});
 }
+  window.cngSyncCustomerRegistry=syncCustomerRegistry;
   if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded',()=>setTimeout(syncCustomerRegistry,1000));
   }else{
