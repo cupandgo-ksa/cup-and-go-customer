@@ -802,11 +802,20 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
 
     <!-- BIG WELCOME PROMO -->
     <div class="modal" id="welcomePromoModal" onclick="closeModalOverlay(event, 'welcomePromoModal')">
-        <div class="modal-box" onclick="event.stopPropagation()" style="text-align:center; padding: 35px 20px;">
+        <div class="modal-box" dir="rtl" onclick="event.stopPropagation()" style="text-align:center; padding: 35px 20px;">
             <div style="font-size:50px; margin-bottom:10px; filter: drop-shadow(0 0 15px rgba(229,193,88,0.5));">🎉</div>
-            <h2 style="color:var(--orange); margin:0 0 10px; font-weight:900; font-size:22px;" id="promoTitle">مرحباً بك</h2>
-            <p style="color:var(--text); font-size:13px; line-height:1.6; margin-bottom: 25px;" id="promoDesc">شكراً لزيارتك كوب آند جو، نتمنى لك تجربة قهوة جميلة.</p>
+            <h2 style="color:var(--orange); margin:0 0 10px; font-weight:900; font-size:22px;" id="promoTitle">أهلاً وسهلاً بكم</h2>
+            <p style="color:var(--text); font-size:13px; line-height:1.6; margin-bottom: 25px;" id="promoDesc">شكراً لزيارتكم كوب آند جو. استمتعوا بأجود أنواع القهوة والحلويات الطازجة المُعدّة خصيصاً لكم.</p>
             <button class="btn-confirm-add" onclick="closeModal('welcomePromoModal')" id="btnPromoCont">متابعة</button>
+        </div>
+    </div>
+
+    <!-- FULL-HD MENU IMAGE PREVIEW -->
+    <div class="modal" id="hdProductImageModal" onclick="closeModalOverlay(event, 'hdProductImageModal')">
+        <div class="modal-box hd-product-image-box" onclick="event.stopPropagation()">
+            <button type="button" class="hd-product-image-close" onclick="closeModal('hdProductImageModal')" aria-label="Close image">✕</button>
+            <img id="hdProductImage" alt="Menu item">
+            <div id="hdProductImageName"></div>
         </div>
     </div>
 
@@ -895,6 +904,13 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
             <div class="slider-dots" id="sliderDots"></div>
         </div>
 
+        <!-- Primary customer action: the menu is available immediately from Home. -->
+        <button class="home-menu-cta" type="button" onclick="switchTab('menu', document.querySelector('.bottom-nav .nav-item[data-tab=menu]'))" aria-label="Open menu">
+            <span class="home-menu-cta-icon" aria-hidden="true">☕</span>
+            <span id="exploreMenuLabel">Explore Menu</span>
+            <span class="home-menu-cta-arrow" aria-hidden="true">›</span>
+        </button>
+
         <!-- QR CODE — moved up directly below banner -->
         <div class="qr-section">
             <div class="qr-title" id="lblQrTitle">Scan Full Menu</div>
@@ -936,6 +952,15 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
                     <input type="tel" id="custPhone" class="input-field" placeholder="Mobile Number" required>
                     <input type="text" id="carNumber" class="input-field" placeholder="Car Number (Optional)">
                 </div>
+                <div id="checkoutPrivacyNote" style="margin:8px 0 12px;padding:10px 12px;border-radius:13px;background:#eef8f2;border:1px solid #d6ebde;color:#34704c;font-size:9.5px;line-height:1.5;">🔒 Your mobile and car details are removed from shop records after the order is completed or cancelled.</div>
+
+                <div id="cartTotalSummary" class="cart-total-summary" aria-live="polite">
+                    <div class="cart-total-copy">
+                        <small id="cartTotalLabel">TOTAL AMOUNT</small>
+                        <span id="cartTotalItems">0 items</span>
+                    </div>
+                    <strong><span id="cartTotalAmount">0.00</span> <span id="cartTotalCurrency">SR</span></strong>
+                </div>
 
                 <div class="cng-payment-card" id="cngPaymentCard">
                     <div class="cng-payment-title">💳 Payment Method / طريقة الدفع</div>
@@ -959,11 +984,15 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
     <div id="tab-about" class="tab-content">
         <div class="profile-page-wrap">
             <div class="profile-hero-card">
-                <img id="aboutLogo" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>" class="profile-logo" alt="Cup And Go">
+                <label class="customer-avatar-picker" for="customerAvatarInput" id="customerAvatarPicker" aria-label="Choose profile photo">
+                    <img id="customerAvatar" class="profile-logo customer-avatar" alt="Customer profile photo">
+                    <span class="customer-avatar-edit" aria-hidden="true">📷</span>
+                </label>
+                <input id="customerAvatarInput" type="file" accept="image/*" hidden onchange="handleCustomerAvatar(event)">
                 <div class="profile-hero-copy">
                     <div class="profile-eyebrow" id="profileEyebrow">CUSTOMER PROFILE</div>
-                    <h2 id="aboutShopName">Cup And Go</h2>
-                    <p id="aboutLocation">Hafar Al Batin, Saudi Arabia</p>
+                    <h2 id="profileHeroName">Guest</h2>
+                    <p id="profileHeroPhone">Tap the photo to add yours</p>
                 </div>
             </div>
 
@@ -1001,11 +1030,10 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
 
     <!-- PREMIUM CUSTOMER BOTTOM DOCK -->
     <div class="bottom-nav">
-        <button class="nav-item active" onclick="switchTab('home', this)"><i>⌂</i><span id="navHome">Home</span></button>
-        <button class="nav-item" onclick="switchTab('menu', this)"><i>▦</i><span id="navMenu">Menu</span></button>
-        <button class="nav-item" onclick="switchTab('cart', this)"><div class="nav-item-cup">🛒</div><span class="cart-nav-badge" id="cartNavBadge">0</span><span id="navCart" style="display:none">Cart</span></button>
-        <button class="nav-item" onclick="openModal('ordersModal'); fetchOrderHistory();"><i>◷</i><span id="navOrders">Orders</span></button>
-        <button class="nav-item" onclick="switchTab('about', this)"><i>◉</i><span id="navAbout">Profile</span></button>
+        <button class="nav-item active" data-tab="home" onclick="switchTab('home', this)" aria-label="Home"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"></path><path d="M5.5 10.5V20h13v-9.5"></path><path d="M9.5 20v-6h5v6"></path></svg></i><span id="navHome">Home</span></button>
+        <button class="nav-item" data-tab="menu" onclick="switchTab('menu', this)" aria-label="Menu"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 8h12v6.5A4.5 4.5 0 0 1 12.5 19h-3A4.5 4.5 0 0 1 5 14.5Z"></path><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"></path><path d="M7 5.5h8"></path></svg></i><span id="navMenu">Menu</span></button>
+        <button class="nav-item" data-tab="cart" onclick="switchTab('cart', this)" aria-label="Cart"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 5h2l1.8 9h9.9l2-6.5H6"></path><circle cx="9" cy="18.5" r="1.2"></circle><circle cx="17" cy="18.5" r="1.2"></circle></svg></i><span class="cart-nav-badge" id="cartNavBadge">0</span><span id="navCart">Cart</span></button>
+        <button class="nav-item" data-tab="about" onclick="switchTab('about', this)" aria-label="Profile"><i aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"></circle><path d="M5.5 20a6.5 6.5 0 0 1 13 0"></path></svg></i><span id="navAbout">Profile</span></button>
     </div>
 
     <!-- FAST BOTTOM SHEET -->
@@ -1071,7 +1099,8 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         firebase.initializeApp(firebaseConfig); const db = firebase.database();
 
         let menuProducts = []; let cart = []; let currentItem = null; let sheetQtyVal = 1; 
-        let isArabic = (localStorage.getItem('cng_lang') === 'ar'); 
+        if(!localStorage.getItem('cng_lang')) localStorage.setItem('cng_lang','ar');
+        let isArabic = (localStorage.getItem('cng_lang') !== 'en'); 
         let activeCategory = 'All Items';
         let sliderImages = []; let currentSlide = 0; let slideIntervalId = null;
         let countdownTimer = null; const CANCEL_WINDOW_SEC = 60; let etaInterval = null; let adminWaitTimeMin = 15;
@@ -1081,11 +1110,20 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         let launchAdTimer = null; let pendingDialogResolver = null;
 
         const dict = {
-            en: { shopName: "Cup And Go", allItems: "All Items", addBtn: "+ Add", pref: "Quick Preferences", note: "Special Instructions", phNote: "e.g. Extra hot...", orderTitle: "Your Order", phName: "Your Name", phPhone: "Mobile Number", phCar: "Car Number (Optional)", cancel: "Cancel", confirm: "Confirm Order", myOrders: "My Orders", history: "History", phTrack: "Mobile Number", prep: "Preparing...", comp: "Completed", notifTit: "Notifications", navHome: "Home", navCart: "Cart", navAbout: "About", lblQr: "Scan Full Menu", subQr: "Share this QR with friends", readyTit: "Order Ready!", readySub: "Please collect your order at the counter.", aboutDesc: "Welcome to Cup And Go, where passion meets coffee. We serve the finest blends and freshly baked desserts tailored just for you.", succTit: "Order Received!", succMsg: "Your order was sent to the cashier. Waiting for confirmation.", lblEta: "Estimated Wait Time", lblMin: "Minutes", btnTrackNow: "Track Order", tagIce: "Extra Ice", tagHot: "Hot 🔥", tagCold: "Cold 🧊", addFinal: "Add to Cart - ", promoTit: "Welcome", promoDesc: "Thank you for visiting us! Enjoy our finest coffee blends and freshly baked desserts tailored just for you.", btnPromoCont: "Continue", exploreMenu:"Explore Menu", tapCategory:"Choose a category", bestSeller:"BEST SELLER", popular:"POPULAR", skipIntro:"Skip Intro" },
-            ar: { shopName: "كوب آند جو", allItems: "الكل", addBtn: "+ إضافة", pref: "خيارات سريعة", note: "ملاحظات خاصة", phNote: "مثال: ساخن جداً...", orderTitle: "طلبك", phName: "الاسم", phPhone: "رقم الجوال", phCar: "رقم السيارة (اختياري)", cancel: "إلغاء", confirm: "تأكيد الطلب", myOrders: "طلباتي", history: "السجل", phTrack: "رقم الجوال", prep: "جاري التحضير...", comp: "مكتمل", notifTit: "الإشعارات", navHome: "الرئيسية", navCart: "السلة", navAbout: "حول", lblQr: "امسح القائمة", subQr: "شارك الكود مع أصدقائك", readyTit: "طلبك جاهز!", readySub: "يرجى استلام طلبك من الكاونتر.", aboutDesc: "مرحباً بك في كوب آند جو، حيث يلتقي الشغف بالقهوة. نقدم لك أفضل الخلطات والحلويات الطازجة المخبوزة خصيصاً لك.", succTit: "تم استلام الطلب!", succMsg: "جاري تحضير طلبك اللذيذ.", lblEta: "الوقت المقدر للانتظار", lblMin: "دقائق", btnTrackNow: "تتبع الطلب", tagIce: "زيادة ثلج", tagHot: "ساخن 🔥", tagCold: "بارد 🧊", addFinal: "أضف إلى السلة - ", promoTit: "مرحباً بك", promoDesc: "شكراً لزيارتك! استمتع بأفضل خلطات القهوة والحلويات المخبوزة طازجاً.", btnPromoCont: "متابعة", exploreMenu:"اكتشف القائمة", tapCategory:"اختر القسم", bestSeller:"الأكثر طلباً", popular:"رائج", skipIntro:"تخطي المقدمة" }
+            en: { shopName: "Cup And Go", allItems: "All Items", addBtn: "+ Add", pref: "Quick Preferences", note: "Special Instructions", phNote: "e.g. Extra hot...", orderTitle: "Your Order", phName: "Your Name", phPhone: "Mobile Number", phCar: "Car Number (Optional)", cancel: "Cancel", confirm: "Confirm Order", myOrders: "My Orders", history: "History", phTrack: "Mobile Number", prep: "Preparing...", comp: "Completed", notifTit: "Notifications", navHome: "Home", navCart: "Cart", navAbout: "About", lblQr: "Scan Full Menu", subQr: "Share this QR with friends", readyTit: "Order Ready!", readySub: "Please collect your order at the counter.", aboutDesc: "Welcome to Cup And Go, where passion meets coffee. We serve the finest blends and freshly baked desserts tailored just for you.", succTit: "Order Received!", succMsg: "Your order was sent to the cashier. Waiting for confirmation.", lblEta: "Estimated Wait Time", lblMin: "Minutes", btnTrackNow: "Track Order", tagIce: "Extra Ice", tagHot: "Hot 🔥", tagCold: "Cold 🧊", addFinal: "Add to Cart - ", promoTit: "أهلاً وسهلاً بكم", promoDesc: "شكراً لزيارتكم كوب آند جو. استمتعوا بأجود أنواع القهوة والحلويات الطازجة المُعدّة خصيصاً لكم.", btnPromoCont: "متابعة", exploreMenu:"Explore Menu", tapCategory:"Choose a category", bestSeller:"BEST SELLER", popular:"POPULAR", skipIntro:"Skip Intro" },
+            ar: { shopName: "كوب آند جو", allItems: "الكل", addBtn: "+ إضافة", pref: "خيارات سريعة", note: "ملاحظات خاصة", phNote: "مثال: ساخن جداً...", orderTitle: "طلبك", phName: "الاسم", phPhone: "رقم الجوال", phCar: "رقم السيارة (اختياري)", cancel: "إلغاء", confirm: "تأكيد الطلب", myOrders: "طلباتي", history: "السجل", phTrack: "رقم الجوال", prep: "جاري التحضير...", comp: "مكتمل", notifTit: "الإشعارات", navHome: "الرئيسية", navCart: "السلة", navAbout: "حول", lblQr: "امسح القائمة", subQr: "شارك الكود مع أصدقائك", readyTit: "طلبك جاهز!", readySub: "يرجى استلام طلبك من الكاونتر.", aboutDesc: "مرحباً بك في كوب آند جو، حيث يلتقي الشغف بالقهوة. نقدم لك أفضل الخلطات والحلويات الطازجة المخبوزة خصيصاً لك.", succTit: "تم استلام الطلب!", succMsg: "جاري تحضير طلبك اللذيذ.", lblEta: "الوقت المقدر للانتظار", lblMin: "دقائق", btnTrackNow: "تتبع الطلب", tagIce: "زيادة ثلج", tagHot: "ساخن 🔥", tagCold: "بارد 🧊", addFinal: "أضف إلى السلة - ", promoTit: "أهلاً وسهلاً بكم", promoDesc: "شكراً لزيارتكم كوب آند جو. استمتعوا بأجود أنواع القهوة والحلويات الطازجة المُعدّة خصيصاً لكم.", btnPromoCont: "متابعة", exploreMenu:"عرض القائمة", tapCategory:"اختر القسم", bestSeller:"الأكثر طلباً", popular:"رائج", skipIntro:"تخطي المقدمة" }
         };
 
         function playBeep() { try { let ctx = new (window.AudioContext || window.webkitAudioContext)(); let osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = 800; osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.3); } catch(e) {} }
+        function speakCustomerStatus(englishText, arabicText) {
+            try {
+                if(!('speechSynthesis' in window)) return false;
+                window.speechSynthesis.cancel();
+                const speech = new SpeechSynthesisUtterance(isArabic ? arabicText : englishText);
+                speech.lang = isArabic ? 'ar-SA' : 'en-US'; speech.rate = 0.92; speech.pitch = 1; speech.volume = 1;
+                window.speechSynthesis.speak(speech); return true;
+            } catch(e) { return false; }
+        }
 
         // Time Greeting
         function updateGreeting(hour) {
@@ -1283,9 +1321,8 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
             let s = snap.val();
             window.__latestCustomerSettings = s || {};
             if(s) {
-                if(s.shopLogo) { document.getElementById('shopLogo').src = s.shopLogo; document.getElementById('aboutLogo').src = s.shopLogo; }
-                if(!isArabic && s.shopName) { document.getElementById('shopName').innerText = s.shopName; document.getElementById('aboutShopName').innerText = s.shopName; }
-                if(s.location) document.getElementById('aboutLocation').innerText = "📍 " + s.location;
+                if(s.shopLogo) { document.getElementById('shopLogo').src = s.shopLogo; }
+                if(!isArabic && s.shopName) { document.getElementById('shopName').innerText = s.shopName; }
                 if(s.ownerPhone) document.getElementById('waLink').href = "https://wa.me/" + s.ownerPhone;
                 if(s.categories) adminCategories = s.categories; else adminCategories = [];
                 if(s.waitTime) adminWaitTimeMin = parseInt(s.waitTime);
@@ -1307,6 +1344,17 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         db.ref('/ledMatrix').on('value', snap => { let led = snap.val(); if(led) { let el = document.getElementById('ledText'); el.innerText = led.text || "☕ Welcome ☕"; el.style.color = led.color || "#ffd700"; } });
 
         // ADMIN NOTIFICATIONS - REAL TIME
+        function cngGetCustomerDeviceId(){
+            let id=localStorage.getItem('cng_customer_device_id');
+            if(!id){id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('cng-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12));localStorage.setItem('cng_customer_device_id',id);}
+            return id;
+        }
+        function cngOrderBelongsToThisCustomer(o,phone){
+            const deviceId=cngGetCustomerDeviceId();
+            if(o&&o.customerDeviceId)return String(o.customerDeviceId)===String(deviceId);
+            return !!(phone&&String(o?.customerPhone||'')===String(phone));
+        }
+        function cngMaskPhone(phone){const d=String(phone||'').replace(/\D/g,'');return d?('••• ••• '+d.slice(-4)):'Private';}
         let adminNotificationListenerStarted = false;
         function listenForAdminNotifications(){
             if(adminNotificationListenerStarted) return; adminNotificationListenerStarted=true;
@@ -1314,7 +1362,9 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
                 const n=snap.val(); if(!n || n.active===false) return;
                 const myPhone=String(localStorage.getItem('cng_phone')||'').trim();
                 const targetPhone=String(n.targetPhone||'').trim();
-                if(targetPhone && targetPhone!==myPhone) return;
+                const targetDeviceId=String(n.targetDeviceId||'').trim();
+                if(targetDeviceId && targetDeviceId!==cngGetCustomerDeviceId()) return;
+                if(!targetDeviceId && targetPhone && targetPhone!==myPhone) return;
                 const seen=JSON.parse(localStorage.getItem('cng_admin_notifs_seen')||'[]');
                 const key=String(n.id||snap.key);
                 if(seen.includes(key)) return;
@@ -1455,7 +1505,8 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         }
         function renderProductsToGrid(itemsArray, gridElement) {
             itemsArray.forEach((p, index) => {
-                let iconHtml = (p.icon && p.icon.length > 15) ? `<div class="item-img-wrap" style="--item-bg:url('${String(p.icon).replace(/'/g, '%27')}')"><img src="${p.icon}" class="item-img" loading="lazy" decoding="async"></div>` : `<div class="item-icon-fallback">${p.icon || '☕'}</div>`;
+                const encodedProductId = encodeURIComponent(String(p.id));
+                let iconHtml = (p.icon && p.icon.length > 15) ? `<button type="button" class="item-img-wrap" style="--item-bg:url('${String(p.icon).replace(/'/g, '%27')}')" onclick="openHdProductImageById('${encodedProductId}')" aria-label="View full HD image"><img src="${p.icon}" alt="${String(p.name||'Menu item').replace(/"/g,'&quot;')}" class="item-img" loading="lazy" decoding="async"><span class="hd-image-zoom-badge" aria-hidden="true">⌕</span></button>` : `<div class="item-icon-fallback">${p.icon || '☕'}</div>`;
                 const rank=popularityRank.indexOf(String(p.name||''));
                 let badge='';
                 if(rank===0 && (popularityByName[p.name]||0)>0) badge=`<div class="bestseller-badge">${isArabic?dict.ar.bestSeller:dict.en.bestSeller}</div>`;
@@ -1489,13 +1540,16 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         // CART & CHECKOUT
         function renderCartTab() {
             let list = document.getElementById('checkoutList'); let form = document.getElementById('cartFormArea');
-            if(cart.length === 0) { list.innerHTML = isArabic ? 'السلة فارغة.' : 'Cart is empty.'; form.style.display = 'none'; return; }
+            if(cart.length === 0) { list.innerHTML = isArabic ? 'السلة فارغة.' : 'Cart is empty.'; form.style.display = 'none'; list.scrollTop = 0; return; }
             form.style.display = 'block'; list.innerHTML = ''; let totalAmt = 0;
             cart.forEach((c, idx) => {
                 totalAmt += c.price * c.qty; let noteHtml = c.note ? `<div style="font-size:11px;color:var(--orange);margin-top:5px;">📝 ${c.note}</div>` : '';
                 list.innerHTML += `<div class="cart-item premium-cart-row"><div class="cart-row-top"><div class="cart-row-name">${c.name}</div><div class="cart-row-price">${(c.price * c.qty).toFixed(2)} SR</div></div><div class="cart-row-controls"><button onclick="changeCartQty(${idx},-1)">−</button><b>${c.qty}</b><button onclick="changeCartQty(${idx},1)">+</button><button class="cart-remove" onclick="removeCartItem(${idx})">Remove</button></div>${noteHtml}</div>`;
             });
-            list.innerHTML += `<div style="text-align:${isArabic?'left':'right'}; font-size:18px; font-weight:900; color:#00E676; margin-top:15px; font-family:'Inter',sans-serif;">Total: ${totalAmt.toFixed(2)} SR</div>`;
+            const totalQty = cart.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+            const totalAmountEl = document.getElementById('cartTotalAmount'); if(totalAmountEl) totalAmountEl.textContent = totalAmt.toFixed(2);
+            const totalItemsEl = document.getElementById('cartTotalItems'); if(totalItemsEl) totalItemsEl.textContent = isArabic ? `${totalQty} ${totalQty === 1 ? 'صنف' : 'أصناف'}` : `${totalQty} item${totalQty === 1 ? '' : 's'}`;
+            list.scrollTop = 0;
             
             let savedPhone = localStorage.getItem('cng_phone');
             if(savedPhone) { document.getElementById('manualProfileView').style.display = 'none'; document.getElementById('savedProfileView').style.display = 'block'; document.getElementById('dispName').innerText = localStorage.getItem('cng_name') || 'Guest'; document.getElementById('dispPhone').innerText = savedPhone; let car = localStorage.getItem('cng_car'); document.getElementById('dispCar').innerText = car ? "Car: " + car : "Walk-in"; } else { document.getElementById('manualProfileView').style.display = 'block'; document.getElementById('savedProfileView').style.display = 'none'; }
@@ -1507,14 +1561,14 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         // PLACE ORDER WITH TIMER
         window.placeOrder = async function() {
             let isManual = document.getElementById('manualProfileView').style.display !== 'none'; let name, phone, car;
-            if(isManual) { name = document.getElementById('custName').value.trim(); phone = document.getElementById('custPhone').value.trim(); car = document.getElementById('carNumber').value.trim(); if(!name || !phone) { await appDialog(isArabic ? "الاسم ورقم الجوال مطلوبان!" : "Name and Phone required!", {icon:"⚠️"}); return; } localStorage.setItem('cng_name', name); localStorage.setItem('cng_phone', phone); if(window.cngSyncCustomerRegistry)setTimeout(window.cngSyncCustomerRegistry,0); if(car) localStorage.setItem('cng_car', car); document.getElementById('trackPhone').value = phone; listenForReadyNotification(); listenForCompletedNotification(); } else { name = localStorage.getItem('cng_name') || 'Guest'; phone = localStorage.getItem('cng_phone'); car = localStorage.getItem('cng_car') || ''; }
+            if(isManual) { name = document.getElementById('custName').value.trim(); phone = document.getElementById('custPhone').value.trim(); car = document.getElementById('carNumber').value.trim(); if(!name || !phone) { await appDialog(isArabic ? "الاسم ورقم الجوال مطلوبان!" : "Name and Phone required!", {icon:"⚠️"}); return; } localStorage.setItem('cng_name', name); localStorage.setItem('cng_phone', phone); if(car) localStorage.setItem('cng_car', car); document.getElementById('trackPhone').value = phone; listenForReadyNotification(); listenForCompletedNotification(); } else { name = localStorage.getItem('cng_name') || 'Guest'; phone = localStorage.getItem('cng_phone'); car = localStorage.getItem('cng_car') || ''; }
             const paymentChoice=document.querySelector('input[name="checkoutPaymentMethod"]:checked');
             if(!paymentChoice){ await appDialog(isArabic ? "اختر طريقة الدفع: نقداً أو بطاقة" : "Please choose payment method: Cash or Card", {icon:"💳"}); return; }
             const paymentMethod=paymentChoice.value;
             let btn = document.getElementById('btnPlaceOrder'); btn.innerText = "Processing..."; btn.disabled = true;
             let orderNote = (document.getElementById('checkoutOrderNote')?.value || '').trim();
             let total = cart.reduce((s, c) => s + (c.price * c.qty), 0); let cashierInfo = car ? `Car: ${car} (${name})` : `Walk-in: ${name}`; let tNow = Date.now();
-            let orderData = { id: tNow, time: new Date().toLocaleTimeString(), items: cart, total: total, cashier: cashierInfo, customerPhone: phone, carNumber: car || "", timestamp: tNow, status: 'new', orderSource: 'customer', customerName: name, customerNote: orderNote, paymentMethod: paymentMethod };
+            let orderData = { id: tNow, time: new Date().toLocaleTimeString(), items: cart, total: total, cashier: cashierInfo, customerPhone: phone, customerPhoneMasked:cngMaskPhone(phone), customerDeviceId:cngGetCustomerDeviceId(), contactExpiresAt:tNow+(24*60*60*1000), privacyVersion:1, carNumber: car || "", timestamp: tNow, status: 'new', orderSource: 'customer', customerName: name, customerNote: orderNote, paymentMethod: paymentMethod };
             // Atomic realtime append: prevents simultaneous customer orders from overwriting each other.
             db.ref('/customerOrders').transaction(current => {
                 let held = current || [];
@@ -1523,6 +1577,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
                 return held;
             }).then(result => {
                 if(!result.committed) throw new Error('Order was not committed');
+                window.cngLastPlacedOrder=orderData; localStorage.setItem('cng_last_order',JSON.stringify(orderData)); if(typeof cngUpdateWhatsAppConfirmButton==='function') cngUpdateWhatsAppConfirmButton();
                 cart = []; const noteBox=document.getElementById('checkoutOrderNote'); if(noteBox) noteBox.value=''; document.querySelectorAll('input[name="checkoutPaymentMethod"]').forEach(r=>r.checked=false); updateCartBadge(); btn.innerText = dict[isArabic?'ar':'en'].confirm; btn.disabled = false;
                 document.querySelectorAll('.nav-item')[0].click(); 
                 startEtaTimer(adminWaitTimeMin); window.openModal('orderSuccessModal'); addNotification(isArabic ? "تم استلام الطلب!" : "Order placed successfully!");
@@ -1549,117 +1604,83 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         window.cancelMyOrder = async function(orderId) {
             let cmsg = isArabic ? "هل أنت متأكد من الإلغاء؟" : "Are you sure you want to cancel?";
             if(!(await appDialog(cmsg,{confirm:true,icon:"🧾"}))) return;
+            let cancelled=null;
             db.ref('/customerOrders').transaction(current => {
                 let held = current || []; if(!Array.isArray(held)) held = Object.values(held);
-                return held.filter(o => String(o?.id) !== String(orderId));
-            }).then(() => { showToast(isArabic ? "تم الإلغاء" : "Cancelled!"); addNotification(isArabic ? "تم إلغاء الطلب" : "Order cancelled."); fetchOrderHistory(); });
+                const found=held.find(o=>String(o?.id)===String(orderId));
+                if(!found||!cngOrderBelongsToThisCustomer(found,localStorage.getItem('cng_phone'))||String(found.status||'new').toLowerCase()!=='new')return;
+                cancelled=found;return held.filter(o => String(o?.id) !== String(orderId));
+            }).then(async result => {
+                if(!result.committed||!cancelled)throw new Error('Not allowed');
+                const masked={...cancelled,status:'cancelled',cancelledAt:Date.now(),cancelReason:'Cancelled by customer',customerPhoneMasked:cancelled.customerPhoneMasked||cngMaskPhone(cancelled.customerPhone),privacyStatus:'contact_removed'};
+                delete masked.customerPhone;delete masked.carNumber;delete masked.cashier;
+                await db.ref('/customerOrderHistory').transaction(current=>{let h=current||[];if(!Array.isArray(h))h=Object.values(h);if(!h.some(o=>String(o?.id)===String(masked.id)))h.push(masked);return h;});
+                showToast(isArabic ? "تم الإلغاء" : "Cancelled!"); addNotification(isArabic ? "تم إلغاء الطلب" : "Order cancelled."); fetchOrderHistory();
+            }).catch(()=>showToast(isArabic?'تعذر إلغاء الطلب':'Could not cancel this order'));
         }
 
         function fetchOrderHistory() {
-            let phone = document.getElementById('trackPhone').value.trim();
-            if(!phone) return;
-
-            let liveArea = document.getElementById('liveTrackingArea');
-            let pastArea = document.getElementById('pastOrdersArea');
+            let phone = document.getElementById('trackPhone').value.trim(); if(!phone) return;
+            let liveArea = document.getElementById('liveTrackingArea'); let pastArea = document.getElementById('pastOrdersArea');
             let tPrep = isArabic ? dict.ar.prep : dict.en.prep;
 
-            const liveRef = db.ref('/customerOrders');
-            if(window.__cngLiveOrdersRef && window.__cngLiveOrdersCb) {
-                window.__cngLiveOrdersRef.off('value', window.__cngLiveOrdersCb);
-            }
-            window.__cngLiveOrdersRef = liveRef;
-            window.__cngLiveOrdersCb = snap => {
-                let held = snap.val() || [];
-                if(!Array.isArray(held)) held = Object.values(held);
-                let myLive = held.filter(o => o && String(o.customerPhone||'') === String(phone));
-
-                if(myLive.length === 0) {
-                    liveArea.innerHTML = '';
-                    return;
-                }
-
-                let html = '';
-                myLive.forEach(o => {
-                    const st = String(o.status||'new').toLowerCase();
-                    const isReady = st === 'ready';
-                    let statusTxt, statusSub, colorTxt, stagePct, stageNo;
-
-                    if(st === 'new'){
-                        statusTxt = isArabic ? 'بانتظار تأكيد الكاشير' : 'Waiting for cashier';
-                        statusSub = isArabic ? 'تم إرسال طلبك إلى الكاشير' : 'Order sent to cashier for confirmation';
-                        colorTxt = '#ff3b30'; stagePct = 33; stageNo = 1;
-                    } else if(['pending','active','accepted','processing'].includes(st)){
-                        statusTxt = isArabic ? 'جاري التحضير...' : 'Preparing...';
-                        statusSub = isArabic ? 'أكد الكاشير الطلب ويجري تحضيره الآن' : 'Cashier accepted your order · Now preparing';
-                        colorTxt = '#ff3b30'; stagePct = 66; stageNo = 2;
-                    } else if(isReady){
-                        statusTxt = isArabic ? 'جاهز للاستلام' : 'Ready for pickup';
-                        statusSub = isArabic ? 'يرجى استلام طلبك من الكاونتر' : 'Please collect your order at the counter';
-                        colorTxt = '#ff3b30'; stagePct = 100; stageNo = 3;
-                    } else {
-                        statusTxt = tPrep; statusSub = ''; colorTxt = '#ff3b30'; stagePct = 66; stageNo = 2;
-                    }
-
-                    let diff = Math.floor((Date.now() - o.timestamp) / 1000);
-                    let timeLeft = CANCEL_WINDOW_SEC - diff;
-                    let cancelBtnHtml = (st === 'new' && timeLeft > 0)
-                        ? `<button class="btn-cancel-timer" data-time="${o.timestamp}" onclick="cancelMyOrder('${o.id}')">${isArabic ? 'إلغاء' : 'Cancel'} (${timeLeft}s)</button>`
-                        : '';
-
-                    html += `<div class="order-card" style="border-color:${colorTxt};">
-<div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:5px;">
-<strong class="cng-live-status" style="color:${colorTxt};"><span>${statusTxt}</span></strong>
-<b style="color:#fff;font-family:'Inter',sans-serif;white-space:nowrap;">${parseFloat(o.total||0).toFixed(2)} SR</b>
-</div>
-<div class="cng-three-step-track red-live-track stage-${stageNo||1}" style="margin:12px 0 9px;">
-<div style="position:relative;height:4px;background:rgba(255,255,255,.12);border-radius:99px;margin:0 12px 8px;">
-<div style="height:100%;width:${stagePct}%;background:${colorTxt};border-radius:99px;transition:width .35s ease;"></div>
-</div>
+            db.ref('/customerOrders').on('value', snap => { 
+                let held = snap.val() || []; if(!Array.isArray(held)) held = Object.values(held);
+                let myLive = held.filter(o => cngOrderBelongsToThisCustomer(o,phone));
+                if(myLive.length === 0) liveArea.innerHTML = '';
+                else {
+                    let html = '';
+                    myLive.forEach(o => {
+                        const st = String(o.status||'new').toLowerCase();
+                        const isReady = st === 'ready';
+                        let statusTxt, statusSub, colorTxt, stagePct, stageNo;
+                        if(st === 'new'){
+                            statusTxt = isArabic ? 'بانتظار تأكيد الكاشير' : 'Waiting for cashier';
+                            statusSub = isArabic ? 'تم إرسال طلبك إلى الكاشير' : 'Order sent to cashier for confirmation';
+                            colorTxt = '#ff3b30'; stagePct = 33; stageNo = 1;
+                        } else if(['pending','active','accepted','processing'].includes(st)){
+                            statusTxt = isArabic ? 'جاري التحضير...' : 'Preparing...';
+                            statusSub = isArabic ? 'أكد الكاشير الطلب ويجري تحضيره الآن' : 'Cashier accepted your order · Now preparing';
+                            colorTxt = '#ff3b30'; stagePct = 66; stageNo = 2;
+                        } else if(isReady){
+                            statusTxt = isArabic ? 'جاهز للاستلام' : 'Ready for pickup';
+                            statusSub = isArabic ? 'يرجى استلام طلبك من الكاونتر' : 'Please collect your order at the counter';
+                            colorTxt = '#ff3b30'; stagePct = 100; stageNo = 3;
+                        } else {
+                            statusTxt = tPrep; statusSub = ''; colorTxt = '#ff3b30'; stagePct = 66; stageNo = 2;
+                        }
+                        let diff = Math.floor((Date.now() - o.timestamp) / 1000); let timeLeft = CANCEL_WINDOW_SEC - diff;
+                        let cancelBtnHtml = (st === 'new' && timeLeft > 0) ? `<button class="btn-cancel-timer" data-time="${o.timestamp}" onclick="cancelMyOrder('${o.id}')">${isArabic ? 'إلغاء' : 'Cancel'} (${timeLeft}s)</button>` : '';
+                        html += `<div class="order-card" style="border-color:${colorTxt};"><div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:5px;"><strong class="cng-live-status" style="color:${colorTxt};"><span>${statusTxt}</span></strong><b style="color:#fff; font-family:'Inter',sans-serif;white-space:nowrap;">${parseFloat(o.total).toFixed(2)} SR</b></div><div class="cng-three-step-track red-live-track stage-${stageNo||1}" style="margin:12px 0 9px;">
+<div style="position:relative;height:4px;background:rgba(255,255,255,.12);border-radius:99px;margin:0 12px 8px;"><div style="height:100%;width:${stagePct}%;background:${colorTxt};border-radius:99px;transition:width .35s ease;"></div></div>
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;text-align:center;font-size:9px;line-height:1.25;">
 <div class="step-one" style="color:${stagePct>=33?'#252b37':'var(--muted)'};"><b class="step-num">1</b>${isArabic?'تم استلام الطلب':'Order Received'}</div>
 <div class="step-two" style="color:${stagePct>=66?'#252b37':'var(--muted)'};"><b class="step-num">2</b>${isArabic?'جاري التحضير':'Preparing'}</div>
 <div class="step-three" style="color:${stagePct>=100?'#252b37':'var(--muted)'};"><b class="step-num">3</b>${isArabic?'جاهز للاستلام':'Ready for Pickup'}</div>
-</div></div>
-${statusSub?`<div style="font-size:10px;color:var(--muted);margin-bottom:5px;line-height:1.45;">${statusSub}</div>`:''}
-<div style="font-size:10px;color:var(--muted);font-family:'Inter',sans-serif;">Order #${o.id}</div>
-${cancelBtnHtml}</div>`;
-                });
-
-                liveArea.innerHTML = html;
-                updateCountdowns();
-            };
-            liveRef.on('value', window.__cngLiveOrdersCb);
-
-            const histRef = db.ref('/customerOrderHistory');
-            if(window.__cngPastHistoryRef && window.__cngPastHistoryCb) {
-                window.__cngPastHistoryRef.off('value', window.__cngPastHistoryCb);
-            }
-            window.__cngPastHistoryRef = histRef;
-            window.__cngPastHistoryCb = snap => {
-                const raw = snap.val();
-                let arr = raw ? (Array.isArray(raw) ? raw.filter(Boolean) : Object.values(raw)) : [];
-                let myPast = arr.filter(o => o && String(o.customerPhone||'') === String(phone))
-                                .sort((a,b) => Number(b.completedAt||b.timestamp||0) - Number(a.completedAt||a.timestamp||0));
-
-                if(myPast.length === 0) {
-                    pastArea.innerHTML = `<p style="color:var(--muted); text-align:center;">No past orders.</p>`;
-                    return;
+</div></div>${statusSub?`<div style="font-size:10px;color:var(--muted);margin-bottom:5px;line-height:1.45;">${statusSub}</div>`:''}<div style="font-size:10px; color:var(--muted); font-family:'Inter',sans-serif;">Order #${o.id}</div>${cancelBtnHtml}</div>`;
+                    });
+                    liveArea.innerHTML = html; updateCountdowns();
                 }
+            });
 
-                pastArea.innerHTML = myPast.map(o => {
-                    let itemsTxt = (o.items || []).map(i => `${i.qty}x ${i.name}`).join(', ');
-                    const when = o.time || new Date(Number(o.completedAt||o.timestamp||Date.now())).toLocaleString();
-                    return `<div class="order-card">
-<div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-<strong style="color:#00E676;">✅ ${isArabic ? dict.ar.comp : dict.en.comp}</strong>
-<b style="color:var(--orange);font-family:'Inter',sans-serif;">${parseFloat(o.total||0).toFixed(2)} SR</b>
-</div>
-<div style="font-size:11px;color:var(--muted);">${itemsTxt}</div>
-<div style="font-size:9px;color:#888;margin-top:3px;font-family:'Inter',sans-serif;">${when}</div>
-</div>`;
-                }).join('');
-            };
-            histRef.on('value', window.__cngPastHistoryCb);
+            Promise.all([ db.ref('/orders').once('value'), db.ref('/history').once('value'), db.ref('/customerOrderHistory').once('value') ]).then(snapshots => {
+                let todayOrds = snapshots[0].val() || []; if(!Array.isArray(todayOrds)) todayOrds = Object.values(todayOrds);
+                let pastHist = snapshots[1].val() || []; if(!Array.isArray(pastHist)) pastHist = Object.values(pastHist);
+                let privateHist=snapshots[2].val()||[];if(!Array.isArray(privateHist))privateHist=Object.values(privateHist);
+                let allCompleted = [...todayOrds,...privateHist]; pastHist.forEach(d => { if(d.ordersData) allCompleted = allCompleted.concat(d.ordersData); });
+                const unique={};allCompleted.forEach(o=>{if(o?.id)unique[String(o.id)]=o;});
+                let myPast = Object.values(unique).filter(o => cngOrderBelongsToThisCustomer(o,phone)).sort((a,b)=>(b.timestamp||b.id||0)-(a.timestamp||a.id||0));
+                if(myPast.length === 0) pastArea.innerHTML = `<p style="color:var(--muted); text-align:center;">No past orders.</p>`;
+                else {
+                    let html = '';
+                    myPast.forEach(o => {
+                        let itemsTxt = (o.items || []).map(i => `${i.qty}x ${i.name}`).join(', ');
+                        const cancelled=String(o.status||'').toLowerCase()==='cancelled';const statusText=cancelled?(isArabic?'ملغي':'Cancelled'):(isArabic?dict.ar.comp:dict.en.comp);
+                        html += `<div class="order-card"><div style="display:flex; justify-content:space-between; margin-bottom:3px;"><strong style="color:${cancelled?'#ff5252':'#00E676'};">${cancelled?'❌':'✅'} ${statusText}</strong><b style="color:var(--orange); font-family:'Inter',sans-serif;">${parseFloat(o.total).toFixed(2)} SR</b></div><div style="font-size:11px; color:var(--muted);">${itemsTxt}</div><div style="font-size:9px; color:#888; margin-top:3px; font-family:'Inter',sans-serif;">${o.time || new Date(o.timestamp).toLocaleDateString()}</div></div>`;
+                    });
+                    pastArea.innerHTML = html;
+                }
+            });
         }
 
         // Ready / completed listener guards (avoid duplicate realtime subscriptions)
@@ -1673,12 +1694,13 @@ ${cancelBtnHtml}</div>`;
             db.ref('/customerOrders').on('value', snap => {
                 const myPhone = localStorage.getItem('cng_phone'); if(!myPhone) return;
                 let held = snap.val() || []; if(!Array.isArray(held)) held = Object.values(held);
-                held.filter(o => String(o.customerPhone||'') === String(myPhone) && String(o.status||'').toLowerCase() === 'ready').forEach(o => triggerReadyPopup(o.id));
+                held.filter(o => cngOrderBelongsToThisCustomer(o,myPhone) && String(o.status||'').toLowerCase() === 'ready').forEach(o => triggerReadyPopup(o.id));
             });
         }
         function triggerReadyPopup(orderId) {
             let notifiedList = JSON.parse(localStorage.getItem('cng_notified') || '[]'); if(notifiedList.includes(orderId)) return;
             document.getElementById('readyPopup').classList.add('show'); playBeep();
+            speakCustomerStatus('Your order is ready for pickup. Please collect it from the counter.', 'طلبك جاهز للاستلام. يرجى التوجه إلى الكاونتر لاستلامه.');
             notifiedList.push(orderId); localStorage.setItem('cng_notified', JSON.stringify(notifiedList));
             addNotification(isArabic ? `طلبك #${orderId} جاهز!` : `Order #${orderId} is Ready!`); fetchOrderHistory();
         }
@@ -1686,55 +1708,31 @@ ${cancelBtnHtml}</div>`;
 
         // Completed Order Notification (NEW)
         function listenForCompletedNotification() {
-            let myPhone = localStorage.getItem('cng_phone');
-            if(!myPhone) return;
-
-            const ref = db.ref('/customerOrderHistory');
-
-            if(window.__cngCompletedHistoryRef && window.__cngCompletedHistoryCb) {
-                window.__cngCompletedHistoryRef.off('child_added', window.__cngCompletedHistoryCb);
-            }
-
-            ref.once('value').then(seedSnap => {
-                const raw = seedSnap.val();
-                const arr = raw ? (Array.isArray(raw) ? raw.filter(Boolean) : Object.values(raw)) : [];
-                let completedNotified = JSON.parse(localStorage.getItem('cng_completed_notified') || '[]');
-
-                arr.filter(o => o && String(o.customerPhone||'') === String(myPhone))
-                   .forEach(o => {
-                       if(o.id != null && !completedNotified.includes(o.id)) completedNotified.push(o.id);
-                   });
-
-                localStorage.setItem('cng_completed_notified', JSON.stringify(completedNotified));
-
-                window.__cngCompletedHistoryRef = ref;
-                window.__cngCompletedHistoryCb = snap => {
-                    const o = snap.val();
-                    const currentPhone = localStorage.getItem('cng_phone');
-                    if(!o || String(o.customerPhone||'') !== String(currentPhone||'')) return;
-
-                    let notified = JSON.parse(localStorage.getItem('cng_completed_notified') || '[]');
-                    if(notified.includes(o.id)) return;
-
-                    notified.push(o.id);
-                    localStorage.setItem('cng_completed_notified', JSON.stringify(notified));
-                    showToast(isArabic ? "✅ تم اكتمال طلبك! شكراً لك." : "✅ Order Completed! Thank you.");
-                    addNotification(isArabic ? `طلبك #${o.id} مكتمل بنجاح!` : `Order #${o.id} is Completed!`);
-                    playBeep();
-                    fetchOrderHistory();
-                };
-
-                ref.on('child_added', window.__cngCompletedHistoryCb);
-                completedListenerStarted = true;
-            }).catch(() => { completedListenerStarted = false; });
+            let myPhone = localStorage.getItem('cng_phone'); if(!myPhone || completedListenerStarted) return;
+            completedListenerStarted = true;
+            
+            db.ref('/orders').on('child_added', snap => {
+                let o = snap.val();
+                if(o && cngOrderBelongsToThisCustomer(o,myPhone)) {
+                    let completedNotified = JSON.parse(localStorage.getItem('cng_completed_notified') || '[]');
+                    if(!completedNotified.includes(o.id)) {
+                        completedNotified.push(o.id); localStorage.setItem('cng_completed_notified', JSON.stringify(completedNotified));
+                        showToast(isArabic ? "✅ تم اكتمال طلبك! شكراً لك." : "✅ Order Completed! Thank you.");
+                        addNotification(isArabic ? `طلبك #${o.id} مكتمل بنجاح!` : `Order #${o.id} is Completed!`);
+                        playBeep();
+                        speakCustomerStatus('Your order is completed. Please collect it as soon as possible.', 'تم اكتمال طلبك. يرجى استلامه في أقرب وقت.');
+                        fetchOrderHistory(); 
+                    }
+                }
+            });
         }
 
         // Translate
         function applyTranslations() {
             document.documentElement.dir = 'ltr'; document.documentElement.lang = isArabic ? 'ar' : 'en'; document.documentElement.classList.toggle('lang-ar', isArabic); document.getElementById('langBtn').innerText = isArabic ? 'English' : 'عربي';
             let t = dict[isArabic ? 'ar' : 'en'];
-            if(isArabic) { document.getElementById('shopName').innerText = t.shopName; document.getElementById('aboutShopName').innerText = t.shopName; }
-            else { db.ref('/settings/shopName').once('value', s => { document.getElementById('shopName').innerText = s.val() || t.shopName; document.getElementById('aboutShopName').innerText = s.val() || t.shopName; }); }
+            if(isArabic) { document.getElementById('shopName').innerText = t.shopName; }
+            else { db.ref('/settings/shopName').once('value', s => { document.getElementById('shopName').innerText = s.val() || t.shopName; }); }
             const setText=(id,v)=>{const e=document.getElementById(id);if(e)e.innerText=v}; const setPH=(id,v)=>{const e=document.getElementById(id);if(e)e.placeholder=v}; document.getElementById('lblPreferences') && (document.getElementById('lblPreferences').innerText=t.pref); document.getElementById('lblSpecialNote') && (document.getElementById('lblSpecialNote').innerText=t.note); setPH('sheetSpecialNote',t.phNote); if(document.getElementById('btnAddFinal')) document.getElementById('btnAddFinal').innerHTML = `${t.addFinal || (isArabic ? 'أضف إلى السلة - ' : 'Add to Cart - ')}<span id="sheetTotalPrice">${document.getElementById('sheetTotalPrice')?.innerText||'0.00'}</span> SR`; document.getElementById('lblYourOrder').innerText = t.orderTitle; document.getElementById('custName').placeholder = t.phName; document.getElementById('custPhone').placeholder = t.phPhone; document.getElementById('carNumber').placeholder = t.phCar; document.getElementById('btnPlaceOrder').innerText = t.confirm; document.getElementById('lblMyOrders').innerText = t.myOrders; document.getElementById('lblHistory').innerText = t.history; document.getElementById('trackPhone').placeholder = t.phTrack; document.getElementById('lblNotif').innerText = t.notifTit; document.getElementById('navHome').innerText = t.navHome; setText('navCart',t.navCart); document.getElementById('navAbout').innerText = t.navAbout; document.getElementById('lblQrTitle').innerText = t.lblQr; document.getElementById('lblQrSub').innerText = t.subQr; document.getElementById('aboutDesc').innerText = t.aboutDesc; document.getElementById('promoTitle').innerText = t.promoTit; document.getElementById('promoDesc').innerText = t.promoDesc; document.getElementById('succTitle').innerText = t.succTit; document.getElementById('succMsg').innerText = t.succMsg; document.getElementById('lblEta').innerText = t.lblEta; document.getElementById('lblMin').innerText = t.lblMin; document.getElementById('btnTrackNow').innerText = t.btnTrackNow; document.getElementById('btnPromoCont').innerText = t.btnPromoCont; setText('exploreMenuLabel',t.exploreMenu); setText('tapCategoryLabel',t.tapCategory); document.getElementById('launchSkipBtn').innerText=t.skipIntro;
             document.getElementById('tagIce').innerText = t.tagIce; document.getElementById('tagHot').innerText = t.tagHot; document.getElementById('tagCold').innerText = t.tagCold;
             
@@ -1778,12 +1776,12 @@ body{background:var(--v5-bg)!important;color:var(--v5-ink)!important}
 /* Smaller welcome popup */
 #welcomePromoModal .modal-box{width:min(82vw,300px)!important;padding:20px 18px 17px!important;border-radius:24px!important}#welcomePromoModal .modal-box>div:first-child{font-size:30px!important}#welcomePromoModal #promoTitle{font-size:18px!important}#welcomePromoModal #promoDesc{font-size:11px!important;margin-bottom:13px!important}#welcomePromoModal #btnPromoCont{min-height:43px!important}
 /* Profile page */
-.profile-page-wrap{padding:18px 16px 120px!important;max-width:620px;margin:auto}.profile-hero-card{display:flex;align-items:center;gap:14px;padding:17px;border-radius:24px;background:linear-gradient(135deg,#fff7ed,#fff);border:1px solid #f4e4d2;box-shadow:0 12px 32px rgba(17,24,39,.06)}.profile-logo{width:68px;height:68px;border-radius:20px;object-fit:cover;border:3px solid #fff;box-shadow:0 6px 18px rgba(17,24,39,.12)}.profile-hero-copy{min-width:0}.profile-eyebrow{font-size:9px;font-weight:900;letter-spacing:1.5px;color:var(--v5-orange);margin-bottom:4px}.profile-hero-copy h2{margin:0;color:var(--v5-ink);font-size:23px}.profile-hero-copy p{margin:5px 0 0;color:var(--v5-muted);font-size:11px}
+.profile-page-wrap{padding:18px 16px 120px!important;max-width:620px;margin:auto}.profile-hero-card{display:flex;align-items:center;gap:14px;padding:17px;border-radius:24px;background:linear-gradient(135deg,#fff7ed,#fff);border:1px solid #f4e4d2;box-shadow:0 12px 32px rgba(17,24,39,.06)}.profile-logo{width:68px;height:68px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 6px 18px rgba(17,24,39,.12)}.customer-avatar-picker{position:relative;display:block;flex:0 0 68px;width:68px;height:68px;cursor:pointer}.customer-avatar-edit{position:absolute;right:-3px;bottom:-3px;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--v5-orange),var(--v5-orange2));border:2px solid #fff;font-size:12px;box-shadow:0 4px 10px rgba(230,108,0,.3)}.profile-hero-copy{min-width:0}.profile-eyebrow{font-size:9px;font-weight:900;letter-spacing:1.5px;color:var(--v5-orange);margin-bottom:4px}.profile-hero-copy h2{margin:0;color:var(--v5-ink);font-size:23px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.profile-hero-copy p{margin:5px 0 0;color:var(--v5-muted);font-size:11px}
 .profile-card-main,.profile-about-mini{margin-top:14px;padding:17px;border-radius:22px;background:#fff;border:1px solid var(--v5-line);box-shadow:0 10px 28px rgba(17,24,39,.05)}.profile-section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}.profile-section-head b{display:block;font-size:15px}.profile-section-head small{display:block;color:var(--v5-muted);font-size:9.5px;margin-top:3px}.profile-edit-btn{border:0;border-radius:11px;background:#fff2e6;color:#e66c00;font-weight:900;padding:8px 12px}.profile-saved-state{display:grid;gap:8px}.profile-data-row{display:flex;gap:11px;align-items:center;padding:11px 12px;border-radius:15px;background:#f8f9fb;border:1px solid #eef0f4}.profile-data-row>span{width:30px;height:30px;border-radius:10px;background:#fff;display:grid;place-items:center}.profile-data-row small{display:block;font-size:9px;color:var(--v5-muted);margin-bottom:2px}.profile-data-row b{font-size:12px;color:var(--v5-ink)}.profile-edit-state{display:grid;gap:9px}.profile-input{width:100%;box-sizing:border-box;border:1px solid var(--v5-line);background:#f8f9fb;border-radius:14px;padding:13px;color:var(--v5-ink);outline:none}.profile-edit-actions{display:flex;gap:9px}.profile-edit-actions button{flex:1;border:0;border-radius:13px;padding:12px;font-weight:900}.profile-cancel-btn{background:#f0f2f5;color:#626b79}.profile-save-btn{background:linear-gradient(135deg,var(--v5-orange),var(--v5-orange2));color:#fff}
 .profile-quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.profile-quick-grid button,.profile-quick-grid a{border:1px solid var(--v5-line);background:#fff;border-radius:18px;padding:14px 8px;text-decoration:none;color:var(--v5-ink);display:flex;flex-direction:column;align-items:center;gap:7px;box-shadow:0 7px 22px rgba(17,24,39,.04);font-family:inherit}.profile-quick-grid span{font-size:22px}.profile-quick-grid b{font-size:9.5px}.profile-about-mini b{font-size:13px}.profile-about-mini p{font-size:11px!important;line-height:1.6!important;color:var(--v5-muted)!important}.dev-badge{margin-top:10px!important;color:#a0a6b2!important;font-size:8.5px!important;background:transparent!important;border:0!important;padding:0!important}
 /* Bottom nav final polish */
 .bottom-nav{height:84px!important;border-radius:26px 26px 0 0!important;padding:7px 12px calc(7px + env(safe-area-inset-bottom))!important}.nav-item{font-family:Arial,sans-serif!important;font-size:9px!important;font-weight:800!important;gap:4px!important}.nav-item i{font-style:normal!important;font-size:21px!important}.nav-item.active i{padding:9px 16px!important;border-radius:16px!important}.nav-item-cup{width:52px!important;height:52px!important;border-radius:17px!important;display:grid!important;place-items:center!important;font-size:22px!important}
-html.lang-ar .profile-page-wrap{text-align:right!important}html.lang-ar .profile-hero-card,html.lang-ar .profile-data-row{direction:rtl!important}html.lang-ar .profile-section-head{direction:rtl!important}html.lang-ar .profile-quick-grid{direction:ltr!important}html.lang-ar .profile-quick-grid b{direction:rtl!important}
+html.lang-ar .profile-page-wrap{text-align:right!important}html.lang-ar .profile-hero-card,html.lang-ar .profile-data-row{direction:rtl!important}html.lang-ar .profile-section-head{direction:rtl!important}html.lang-ar .profile-quick-grid{direction:ltr!important}html.lang-ar .profile-quick-grid b{direction:rtl!important}html.lang-ar .customer-avatar-edit{right:auto;left:-3px}
 </style>
 <script id="cng-v5-master-js">
 (function(){
@@ -1791,16 +1789,30 @@ html.lang-ar .profile-page-wrap{text-align:right!important}html.lang-ar .profile
   if(!localStorage.getItem('cng_v5_lang_initialized')){localStorage.setItem('cng_lang','en');localStorage.setItem('cng_v5_lang_initialized','1');isArabic=false;}
   const oldApply=window.applyTranslations || applyTranslations;
   function v5Text(id,en,ar){const e=document.getElementById(id);if(e)e.textContent=isArabic?ar:en;}
+  function defaultCustomerAvatar(name){
+    const initial=(name||'G').trim().charAt(0).toUpperCase()||'G';
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff9f32"/><stop offset="1" stop-color="#e66c00"/></linearGradient></defs><rect width="320" height="320" rx="160" fill="url(#g)"/><text x="160" y="205" text-anchor="middle" font-family="Arial,sans-serif" font-size="145" font-weight="800" fill="white">${initial.replace(/[&<>]/g,'')}</text></svg>`;
+    return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+  }
+  function renderCustomerAvatar(){
+    const n=localStorage.getItem('cng_name')||'';const p=localStorage.getItem('cng_phone')||'';const saved=localStorage.getItem('cng_customer_avatar');
+    const img=document.getElementById('customerAvatar'),hn=document.getElementById('profileHeroName'),hp=document.getElementById('profileHeroPhone'),picker=document.getElementById('customerAvatarPicker');
+    if(img)img.src=saved||defaultCustomerAvatar(n);if(hn)hn.textContent=n||(isArabic?'زائر':'Guest');if(hp)hp.textContent=p||(isArabic?'اضغط على الصورة لإضافة صورتك':'Tap the photo to add yours');if(picker)picker.setAttribute('aria-label',isArabic?'اختر صورة الملف الشخصي':'Choose profile photo');
+  }
+  window.handleCustomerAvatar=function(event){
+    const file=event?.target?.files?.[0];if(!file)return;if(!file.type.startsWith('image/')){showToast(isArabic?'⚠️ اختر صورة صحيحة':'⚠️ Please choose an image');return;}
+    const reader=new FileReader();reader.onload=()=>{const source=new Image();source.onload=()=>{const size=Math.min(source.naturalWidth,source.naturalHeight),sx=(source.naturalWidth-size)/2,sy=(source.naturalHeight-size)/2,canvas=document.createElement('canvas');canvas.width=360;canvas.height=360;canvas.getContext('2d').drawImage(source,sx,sy,size,size,0,0,360,360);try{localStorage.setItem('cng_customer_avatar',canvas.toDataURL('image/jpeg',.88));renderCustomerAvatar();showToast(isArabic?'✅ تم حفظ صورتك على هذا الجهاز':'✅ Photo saved on this device');}catch(e){showToast(isArabic?'⚠️ تعذر حفظ الصورة':'⚠️ Could not save the photo');}};source.src=reader.result;};reader.readAsDataURL(file);event.target.value='';
+  };
   window.renderCustomerProfile=function(){
     const n=localStorage.getItem('cng_name')||''; const p=localStorage.getItem('cng_phone')||''; const c=localStorage.getItem('cng_car')||'';
     const nv=document.getElementById('profileNameValue'),pv=document.getElementById('profilePhoneValue'),cv=document.getElementById('profileCarValue');
     if(nv)nv.textContent=n||(isArabic?'ضيف':'Guest'); if(pv)pv.textContent=p||(isArabic?'غير محفوظ':'Not saved'); if(cv)cv.textContent=c||(isArabic?'اختياري':'Optional');
-    const ni=document.getElementById('profileNameInput'),pi=document.getElementById('profilePhoneInput'),ci=document.getElementById('profileCarInput'); if(ni)ni.value=n;if(pi)pi.value=p;if(ci)ci.value=c;
+    const ni=document.getElementById('profileNameInput'),pi=document.getElementById('profilePhoneInput'),ci=document.getElementById('profileCarInput'); if(ni)ni.value=n;if(pi)pi.value=p;if(ci)ci.value=c;renderCustomerAvatar();
   };
   window.toggleProfileEdit=function(show){const a=document.getElementById('profileSavedState'),b=document.getElementById('profileEditState');if(a)a.style.display=show?'none':'grid';if(b)b.style.display=show?'grid':'none';if(show)renderCustomerProfile();};
-  window.saveCustomerProfile=function(){const n=(document.getElementById('profileNameInput')?.value||'').trim(),p=(document.getElementById('profilePhoneInput')?.value||'').trim(),c=(document.getElementById('profileCarInput')?.value||'').trim();if(!n||!p){appDialog(isArabic?'الاسم ورقم الجوال مطلوبان':'Name and mobile number are required',{icon:'⚠️'});return;}localStorage.setItem('cng_name',n);localStorage.setItem('cng_phone',p);if(window.cngSyncCustomerRegistry)setTimeout(window.cngSyncCustomerRegistry,0);if(c)localStorage.setItem('cng_car',c);else localStorage.removeItem('cng_car');const tp=document.getElementById('trackPhone');if(tp)tp.value=p;renderCustomerProfile();toggleProfileEdit(false);listenForReadyNotification();listenForCompletedNotification();showToast(isArabic?'✅ تم حفظ الملف الشخصي':'✅ Profile saved');};
+  window.saveCustomerProfile=function(){const n=(document.getElementById('profileNameInput')?.value||'').trim(),p=(document.getElementById('profilePhoneInput')?.value||'').trim(),c=(document.getElementById('profileCarInput')?.value||'').trim();if(!n||!p){appDialog(isArabic?'الاسم ورقم الجوال مطلوبان':'Name and mobile number are required',{icon:'⚠️'});return;}localStorage.setItem('cng_name',n);localStorage.setItem('cng_phone',p);if(c)localStorage.setItem('cng_car',c);else localStorage.removeItem('cng_car');const tp=document.getElementById('trackPhone');if(tp)tp.value=p;renderCustomerProfile();toggleProfileEdit(false);listenForReadyNotification();listenForCompletedNotification();showToast(isArabic?'✅ تم حفظ الملف الشخصي':'✅ Profile saved');};
   function polishTranslations(){
-    v5Text('navMenu','Menu','القائمة');v5Text('navOrders','Orders','الطلبات');v5Text('navAbout','Profile','الملف');
+    v5Text('navMenu','Menu','القائمة');v5Text('navAbout','Profile','الملف');v5Text('checkoutPrivacyNote','🔒 Your mobile and car details are removed from shop records after the order is completed or cancelled.','🔒 يتم حذف رقم الجوال وبيانات السيارة من سجلات المتجر بعد اكتمال الطلب أو إلغائه.');v5Text('cartTotalLabel','TOTAL AMOUNT','المبلغ الإجمالي');
     v5Text('profileEyebrow','CUSTOMER PROFILE','ملف العميل');v5Text('profileDetailsTitle','Your details','بياناتك');v5Text('profileDetailsSub','Saved for faster checkout & order tracking','محفوظة للدفع السريع وتتبع الطلب');v5Text('profileEditBtn','Edit','تعديل');v5Text('profileNameLabel','Name','الاسم');v5Text('profilePhoneLabel','Mobile','الجوال');v5Text('profileCarLabel','Car number','رقم السيارة');v5Text('profileCancelBtn','Cancel','إلغاء');v5Text('profileSaveBtn','Save profile','حفظ الملف');v5Text('profileOrdersBtn','My Orders','طلباتي');v5Text('profileNotifBtn','Notifications','الإشعارات');v5Text('profileWhatsappBtn','WhatsApp','واتساب');v5Text('profileAboutTitle','About Cup And Go','عن كوب آند جو');
     const ni=document.getElementById('profileNameInput'),pi=document.getElementById('profilePhoneInput'),ci=document.getElementById('profileCarInput');if(ni)ni.placeholder=isArabic?'الاسم':'Your name';if(pi)pi.placeholder=isArabic?'رقم الجوال':'Mobile number';if(ci)ci.placeholder=isArabic?'رقم السيارة (اختياري)':'Car number (optional)';
     const empty=document.querySelector('#notifArea>p');if(empty&&myNotifications.length===0)empty.textContent=isArabic?'لا توجد إشعارات حالياً':'No notifications yet';
@@ -1813,7 +1825,7 @@ html.lang-ar .profile-page-wrap{text-align:right!important}html.lang-ar .profile
   const oldRender=window.renderNotifs || renderNotifs;
   renderNotifs=function(){let area=document.getElementById('notifArea');if(!area)return;if(myNotifications.length===0){area.innerHTML=`<div style="padding:28px 12px;text-align:center;color:#7d8595"><div style="font-size:28px;margin-bottom:8px">🔔</div><b style="display:block;color:#394150;margin-bottom:4px">${isArabic?'لا توجد إشعارات':'No notifications yet'}</b><small>${isArabic?'ستظهر عروض المتجر وتحديثات الطلب هنا':'Offers and order updates will appear here'}</small></div>`;return;}area.innerHTML='';myNotifications.forEach(n=>{area.innerHTML+=`<div style="padding:13px 4px;border-bottom:1px solid #eceef2"><div style="font-weight:750;color:#232a38;line-height:1.45">${n.text}</div><span style="font-size:9px;color:#949baa;margin-top:5px;display:block">${n.time}</span></div>`;n.read=true;});localStorage.setItem('cng_notifs',JSON.stringify(myNotifications));updateNotifBadge();};window.renderNotifs=renderNotifs;
   /* Firebase shop name should always fit; English is default, Arabic only when selected. */
-  db.ref('/settings/shopName').on('value',snap=>{if(!isArabic){const name=snap.val()||'Cup And Go';const a=document.getElementById('shopName'),b=document.getElementById('aboutShopName');if(a)a.textContent=name;if(b)b.textContent=name;}});
+  db.ref('/settings/shopName').on('value',snap=>{if(!isArabic){const name=snap.val()||'Cup And Go';const a=document.getElementById('shopName');if(a)a.textContent=name;}});
   setTimeout(()=>{applyTranslations();renderCustomerProfile();},50);
 })();
 </script>
@@ -2903,7 +2915,7 @@ html[dir="rtl"] #greetingMsg{
  function render(d){var a=document.getElementById('cngChatMessages');if(!a)return;var m=d&&d.messages?Object.values(d.messages):[];m.sort(function(x,y){return(x.timestamp||0)-(y.timestamp||0);});if(!m.length){a.innerHTML='<div style="text-align:center;color:#9299a4;padding:45px 14px;font-size:12px">☕ Send us a message. We will reply here.</div>';return;}var h='';m.forEach(function(x){h+='<div class="cngMsgRow '+(x.sender==='customer'?'me':'them')+'"><div class="cngMsg"><div>'+esc(x.text)+'</div><div class="cngMsgTime">'+tm(x.timestamp)+'</div></div></div>';});a.innerHTML=h;setTimeout(function(){a.scrollTop=a.scrollHeight;},0);}
  function listen(){if(chatRef&&chatListener)chatRef.off('value',chatListener);var p=prof();if(!p.phone)return;chatRef=db.ref('/customerChats/'+key(p.phone));chatListener=function(s){var d=s.val()||{};render(d);badge(d.unreadCustomer||0);if(document.getElementById('cngCustomerChatModal').classList.contains('open')&&Number(d.unreadCustomer)>0)chatRef.update({unreadCustomer:0});};chatRef.on('value',chatListener);}
  window.cngOpenCustomerChat=function(){var p=prof(),setup=document.getElementById('cngChatSetup'),comp=document.getElementById('cngChatComposer');var logo=document.getElementById('shopLogo');if(logo)document.getElementById('cngChatShopLogo').src=logo.src;if(!p.phone){setup.style.display='block';comp.style.display='none';document.getElementById('cngChatName').value=p.name;}else{setup.style.display='none';comp.style.display='flex';listen();}openModal('cngCustomerChatModal');if(chatRef)chatRef.update({unreadCustomer:0});};
- window.cngSaveChatProfile=function(){var n=document.getElementById('cngChatName').value.trim(),p=document.getElementById('cngChatPhone').value.trim();if(!n||!p){if(typeof showToast==='function')showToast('Name and mobile number required');return;}localStorage.setItem('cng_name',n);localStorage.setItem('cng_phone',p);if(window.cngSyncCustomerRegistry)setTimeout(window.cngSyncCustomerRegistry,0);document.getElementById('cngChatSetup').style.display='none';document.getElementById('cngChatComposer').style.display='flex';listen();};
+ window.cngSaveChatProfile=function(){var n=document.getElementById('cngChatName').value.trim(),p=document.getElementById('cngChatPhone').value.trim();if(!n||!p){if(typeof showToast==='function')showToast('Name and mobile number required');return;}localStorage.setItem('cng_name',n);localStorage.setItem('cng_phone',p);document.getElementById('cngChatSetup').style.display='none';document.getElementById('cngChatComposer').style.display='flex';listen();};
  window.cngCustomerSendMessage=function(){var p=prof(),i=document.getElementById('cngChatInput'),m=(i.value||'').trim();if(!p.phone){cngOpenCustomerChat();return;}if(!m)return;i.value='';var r=db.ref('/customerChats/'+key(p.phone)),now=Date.now();r.child('messages').push({sender:'customer',text:m,timestamp:now});r.transaction(function(d){d=d||{};d.customerName=p.name||'Customer';d.customerPhone=p.phone;d.updatedAt=now;d.lastMessage=m;d.lastSender='customer';d.unreadAdmin=(Number(d.unreadAdmin)||0)+1;d.unreadCustomer=0;return d;});};
  document.addEventListener('DOMContentLoaded',function(){if(prof().phone)listen();});setTimeout(function(){if(prof().phone)listen();},800);
 })();
@@ -2991,95 +3003,407 @@ input#trackPhone{
 }
 </style>
 
-<!-- ===== CUP AND GO CUSTOMER LOYALTY v2 ===== -->
-<style id="cng-loyalty-customer-css">
-#cngCustomerLoyaltyCard{margin:0 15px 20px;padding:20px;border-radius:27px;background:linear-gradient(145deg,#552f31,#4b292b);border:1px solid rgba(255,255,255,.10);box-shadow:0 18px 40px rgba(34,16,18,.28);position:relative;overflow:hidden;color:#fff}
-#cngCustomerLoyaltyCard:before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 88% 10%,rgba(255,255,255,.08),transparent 24%);pointer-events:none}
-.cngLHead{display:flex;justify-content:space-between;align-items:center;gap:12px;position:relative;z-index:1}.cngLBrand{display:flex;align-items:center;gap:10px}.cngLBrandLogo{width:48px;height:48px;border-radius:15px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;overflow:hidden}.cngLBrandLogo img{width:100%;height:100%;object-fit:contain}.cngLTitle{font-size:17px;font-weight:900;color:#fff}.cngLSub{font-size:10px;color:rgba(255,255,255,.66);margin-top:2px}.cngLBadge{font-size:10px;font-weight:900;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.10);color:#fff;white-space:nowrap}
-.cngLCupsGrid{margin:22px 4px 18px;position:relative;z-index:1}.cngCupRow{display:flex;justify-content:center;align-items:center;gap:12px;margin-bottom:14px}.cngCupRow:last-child{margin-bottom:0}.cngCupStamp{width:76px;height:76px;flex:0 0 76px;display:flex;align-items:center;justify-content:center;opacity:.23;filter:grayscale(1);transition:.25s;background:transparent!important;border:0!important;box-shadow:none!important}.cngCupStamp.on{opacity:1;filter:none}.cngCupStamp img{width:100%;height:100%;object-fit:contain;background:transparent!important}.cngCupStamp span{font-size:38px}
-.cngLStats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}.cngLStat small{display:block;font-size:9px;color:rgba(255,255,255,.62);font-weight:700}.cngLStat b{display:block;font-size:18px;color:#fff;margin-top:3px}.cngLRewardName{margin-top:13px}.cngLRewardName small{display:block;font-size:9px;color:rgba(255,255,255,.62);font-weight:700}.cngLRewardName b{display:block;font-size:13px;margin-top:3px;color:#fff}
-.cngLProgressTxt{margin-top:14px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.07);font-size:10px;color:rgba(255,255,255,.84);font-weight:800}.cngLProgressTxt strong{color:#ffd36a}
-.cngLQrWrap{margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);display:grid;grid-template-columns:118px minmax(0,1fr);gap:18px;align-items:center}.cngLQrBox{background:#fff;padding:8px;border-radius:17px;width:118px;height:118px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 118px}.cngLQrBox img,.cngLQrBox canvas{width:100px!important;height:100px!important;max-width:100px!important;max-height:100px!important}.cngLQrText{min-width:0}.cngLQrText b{display:block;color:#fff;font-size:11px;line-height:1.35}.cngLQrText span{display:block;color:rgba(255,255,255,.60);font-size:9px;line-height:1.55;margin-top:5px;overflow-wrap:anywhere}
-.cngLSetup{padding:16px;border-radius:16px;background:rgba(255,255,255,.08);text-align:center;font-size:10px;color:rgba(255,255,255,.72);margin-top:16px}.cngLSetup button{margin-top:9px;border:0;border-radius:12px;padding:9px 14px;background:#ffd36a;font-weight:900;color:#3d2224}
-@media(max-width:420px){.cngLQrWrap{grid-template-columns:1fr;gap:12px;text-align:center}.cngLQrBox{width:118px;height:118px;margin:0 auto;flex-basis:auto}.cngLQrText{padding:0 8px}.cngLQrText span{font-size:9px;line-height:1.5}}@media(max-width:420px){.cngCupRow{gap:9px;margin-bottom:11px}.cngCupStamp{width:68px;height:68px;flex-basis:68px}}@media(max-width:360px){.cngCupRow{gap:7px}.cngCupStamp{width:60px;height:60px;flex-basis:60px}}
-</style>
-<script id="cng-loyalty-customer-js">
-(function(){
- let settings={target:8,rewardName:'Free Coffee',cupImage:''},cust=null,custRef=null,custCb=null;
- const safeKey=p=>String(p||'').trim().replace(/[^a-zA-Z0-9_-]/g,'_');
- const phone=()=>String(localStorage.getItem('cng_phone')||'').trim(),name=()=>String(localStorage.getItem('cng_name')||'Customer').trim()||'Customer';
- function calc(){const t=Math.max(2,Number(settings.target)||8),total=Math.max(0,Number(cust?.totalCups)||0),red=Math.max(0,Number(cust?.redeemedRewards)||0),earned=Math.floor(total/t),avail=Math.max(0,earned-red),used=red*t,raw=Math.max(0,total-used),shown=avail>0?t:(raw%t),left=avail>0?0:Math.max(0,t-shown);return{t,total,red,avail,shown,left}}
- function findHome(){return document.getElementById('tab-home')||document.querySelector('.tab-content')||document.body}
- function logoSrc(){const el=document.getElementById('shopLogo');return el&&el.src?el.src:''}
- function ensureCard(){if(document.getElementById('cngCustomerLoyaltyCard'))return;const host=findHome(),d=document.createElement('div');d.id='cngCustomerLoyaltyCard';d.innerHTML='<div class="cngLHead"><div class="cngLBrand"><div class="cngLBrandLogo" id="cngLBrandLogo">☕</div><div><div class="cngLTitle">Cup And Go</div><div class="cngLSub">Rewards Card</div></div></div><div class="cngLBadge" id="cngCustomerLoyaltyBadge">LOYALTY</div></div><div id="cngCustomerLoyaltyBody"></div>';const qr=host.querySelector('.qr-section');if(qr)qr.insertAdjacentElement('beforebegin',d);else host.appendChild(d);render()}
- function render(){ensureCard();const body=document.getElementById('cngCustomerLoyaltyBody'),badge=document.getElementById('cngCustomerLoyaltyBadge'),lg=document.getElementById('cngLBrandLogo');if(lg){const s=logoSrc();lg.innerHTML=s?'<img src="'+s+'" alt="logo">':'☕'}if(!body)return;const p=phone();if(!p){badge.textContent='SETUP';body.innerHTML='<div class="cngLSetup">Save your name and mobile number in Profile or while ordering to activate your personal loyalty QR.<br><button onclick="window.switchTab&&switchTab(\'about\')">OPEN PROFILE</button></div>';return}const x=calc();badge.textContent=x.avail>0?'🎁 '+x.avail+' REWARD'+(x.avail>1?'S':''):(x.shown+'/'+x.t);let stamps='';const stampItems=[];for(let i=1;i<=x.t;i++){const on=i<=x.shown,inside=settings.cupImage?'<img src="'+settings.cupImage+'" alt="cup">':'<span>☕</span>';stampItems.push('<div class="cngCupStamp '+(on?'on':'')+'">'+inside+'</div>')}const rows=[];let remaining=stampItems.length,idx=0;while(remaining>0){let size;if(remaining<=4){size=remaining}else if(remaining===5){size=3}else{size=4}rows.push(stampItems.slice(idx,idx+size));idx+=size;remaining-=size}stamps=rows.map(r=>'<div class="cngCupRow">'+r.join('')+'</div>').join('');const msg=x.avail>0?('🎉 '+(settings.rewardName||'Reward')+' available now!'):(x.left+' more cup'+(x.left===1?'':'s')+' to unlock '+(settings.rewardName||'your reward'));body.innerHTML='<div class="cngLCupsGrid">'+stamps+'</div><div class="cngLStats"><div class="cngLStat"><small>POINTS / CUPS</small><b>'+x.shown+'</b></div><div class="cngLStat"><small>TO NEXT REWARD</small><b>'+x.left+'</b></div></div><div class="cngLRewardName"><small>NEXT REWARD</small><b>'+(settings.rewardName||'Reward')+'</b></div><div class="cngLProgressTxt"><strong>'+x.total+'</strong> lifetime cups · '+msg+'</div><div class="cngLQrWrap"><div class="cngLQrBox"><div id="cngPersonalLoyaltyQr"></div></div><div class="cngLQrText"><b>Your personal loyalty QR</b><span>Show this QR to the cashier. Your cup count updates here in real time.</span></div></div>';setTimeout(makeQr,0)}
- function makeQr(){const el=document.getElementById('cngPersonalLoyaltyQr');if(!el||!phone())return;el.innerHTML='';const txt='CNGLOYALTY|'+encodeURIComponent(phone());try{new QRCode(el,{text:txt,width:90,height:90,correctLevel:QRCode.CorrectLevel.M})}catch(e){el.textContent='QR'}}
- function attachCustomer(){
-   const p=phone();
-   if(custRef&&custCb)custRef.off('value',custCb);
-   custRef=null;custCb=null;
-   if(!p){cust=null;render();return}
-   custRef=db.ref('/loyaltyCustomers/'+safeKey(p));
-   custCb=s=>{
-     const v=s.val();
-     cust=v||{phone:p,name:name(),totalCups:0,redeemedRewards:0};
-     render();
-   };
-   custRef.on('value',custCb);
- }
- db.ref('/loyaltySettings').on('value',s=>{settings=Object.assign({target:8,rewardName:'Free Coffee',cupImage:''},s.val()||{});render()});
- window.addEventListener('storage',e=>{if(e.key==='cng_phone'||e.key==='cng_name')attachCustomer()});
- setInterval(()=>{const p=phone();if((cust?.phone||'')!==p)attachCustomer()},1500);
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{ensureCard();attachCustomer()});else{ensureCard();attachCustomer()}
-})();
-</script>
-<!-- ===== END CUP AND GO CUSTOMER LOYALTY ===== -->
-
-
-</div>
-</div>
-
-
-
-<script id="cng-customer-registry-sync-js">
-(function(){
-  const key=p=>String(p||'').trim().replace(/[^a-zA-Z0-9_-]/g,'_');
-  function syncCustomerRegistry(){
-    const phone=String(localStorage.getItem('cng_phone')||'').trim();
-    const name=String(localStorage.getItem('cng_name')||'').trim();
-    if(!phone || !name || typeof db==='undefined') return;
-    const now=Date.now();
-    const regRef=db.ref('/customerRegistry/'+key(phone));
-    regRef.once('value').then(s=>{
-      const old=s.val()||{};
-      return regRef.update({
-        name:name,
-        phone:phone,
-        joinedAt:old.joinedAt||now,
-        lastSeenAt:now,
-        active:true
-      });
-    }).catch(()=>{});
+<style id="cng-v18-customer-navigation-cleanup">
+/* A clear Home action makes the menu discoverable before the share QR. */
+.home-menu-cta{
+  width:calc(100% - 52px)!important;
+  min-height:58px!important;
+  margin:14px 26px 14px!important;
+  padding:10px 14px!important;
+  border:0!important;
+  border-radius:19px!important;
+  display:grid!important;
+  grid-template-columns:38px minmax(0,1fr) 24px!important;
+  align-items:center!important;
+  gap:10px!important;
+  background:linear-gradient(135deg,#ff871d,#ffad43)!important;
+  color:#fff!important;
+  box-shadow:0 12px 26px rgba(238,119,17,.26)!important;
+  font-family:'Inter','Cairo',sans-serif!important;
+  cursor:pointer!important;
 }
-  window.cngSyncCustomerRegistry=syncCustomerRegistry;
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',()=>setTimeout(syncCustomerRegistry,1000));
-  }else{
-    setTimeout(syncCustomerRegistry,1000);
-  }
-  window.addEventListener('storage',e=>{
-    if(e.key==='cng_name'||e.key==='cng_phone')setTimeout(syncCustomerRegistry,100);
-  });
-  setInterval(syncCustomerRegistry,10000);
-})();
+.home-menu-cta:active{transform:scale(.985)!important}
+.home-menu-cta-icon{
+  width:38px!important;
+  height:38px!important;
+  border-radius:13px!important;
+  display:grid!important;
+  place-items:center!important;
+  background:rgba(255,255,255,.2)!important;
+  font-size:20px!important;
+}
+.home-menu-cta #exploreMenuLabel{
+  font-size:15px!important;
+  line-height:1.2!important;
+  font-weight:900!important;
+  text-align:left!important;
+}
+.home-menu-cta-arrow{font:400 31px/1 Arial,sans-serif!important;text-align:center!important}
+html.lang-ar .home-menu-cta{direction:rtl!important}
+html.lang-ar .home-menu-cta #exploreMenuLabel{text-align:right!important}
+html.lang-ar .home-menu-cta-arrow{transform:rotate(180deg)!important}
+
+/* The welcome card is intentionally Arabic-only, independent of the language toggle. */
+#welcomePromoModal .modal-box,
+#welcomePromoModal #promoTitle,
+#welcomePromoModal #promoDesc,
+#welcomePromoModal #btnPromoCont{
+  direction:rtl!important;
+  text-align:center!important;
+  font-family:'Cairo','Inter',sans-serif!important;
+}
+
+/* Four consistent destinations: Home, Menu, Cart and Profile. */
+.bottom-nav{
+  left:14px!important;
+  right:14px!important;
+  bottom:calc(10px + env(safe-area-inset-bottom))!important;
+  height:70px!important;
+  padding:6px!important;
+  border-radius:24px!important;
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  align-items:center!important;
+  justify-content:initial!important;
+  gap:4px!important;
+  background:rgba(255,255,255,.98)!important;
+  border:1px solid #e5e8ee!important;
+  box-shadow:0 12px 34px rgba(20,27,43,.15)!important;
+}
+.bottom-nav .nav-item[data-tab]{
+  position:relative!important;
+  top:0!important;
+  width:100%!important;
+  min-width:0!important;
+  height:58px!important;
+  padding:5px 2px!important;
+  border-radius:18px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:4px!important;
+  background:transparent!important;
+  color:#7f8794!important;
+  box-shadow:none!important;
+}
+.bottom-nav .nav-item[data-tab] i{
+  width:30px!important;
+  height:30px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:11px!important;
+  display:grid!important;
+  place-items:center!important;
+  background:transparent!important;
+  color:currentColor!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+.bottom-nav .nav-item[data-tab] i svg{
+  width:22px!important;
+  height:22px!important;
+  fill:none!important;
+  stroke:currentColor!important;
+  stroke-width:1.9!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+}
+.bottom-nav .nav-item[data-tab] > span:last-child{
+  display:block!important;
+  margin:0!important;
+  color:currentColor!important;
+  font-size:10px!important;
+  line-height:1!important;
+  font-weight:800!important;
+}
+.bottom-nav .nav-item[data-tab].active{
+  background:#fff6eb!important;
+  color:#d9680b!important;
+  box-shadow:inset 0 0 0 1px #ffe5c8!important;
+}
+/* Menu remains visually identifiable even while another tab is open. */
+.bottom-nav .nav-item[data-tab="menu"]{color:#d9680b!important}
+.bottom-nav .nav-item[data-tab="menu"] i{
+  width:34px!important;
+  height:34px!important;
+  background:linear-gradient(135deg,#ff861d,#ffad43)!important;
+  color:#fff!important;
+  box-shadow:0 8px 18px rgba(238,119,17,.28)!important;
+}
+.bottom-nav .nav-item[data-tab="menu"].active i{
+  box-shadow:0 0 0 4px rgba(255,139,31,.12),0 9px 22px rgba(238,119,17,.34)!important;
+}
+.bottom-nav .nav-item[data-tab="cart"] .cart-nav-badge{
+  top:1px!important;
+  right:calc(50% - 21px)!important;
+}
+body{padding-bottom:calc(104px + env(safe-area-inset-bottom))!important}
+@media(max-width:380px){
+  .home-menu-cta{width:calc(100% - 36px)!important;margin-left:18px!important;margin-right:18px!important}
+  .bottom-nav{left:8px!important;right:8px!important;height:68px!important}
+  .bottom-nav .nav-item[data-tab]{height:56px!important}
+}
+</style>
+
+<style id="cng-original-hd-menu-image-style">
+/* Menu cards show the complete original image; tap opens the full-HD view. */
+button.item-img-wrap{
+  border:0!important;
+  padding:0!important;
+  margin:0!important;
+  cursor:zoom-in!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+}
+.item-img{
+  object-fit:contain!important;
+  object-position:center!important;
+  image-rendering:auto!important;
+}
+.hd-image-zoom-badge{
+  position:absolute!important;
+  right:8px!important;
+  bottom:8px!important;
+  width:27px!important;
+  height:27px!important;
+  border-radius:10px!important;
+  display:grid!important;
+  place-items:center!important;
+  background:rgba(20,27,43,.76)!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.32)!important;
+  box-shadow:0 5px 14px rgba(0,0,0,.2)!important;
+  font:900 17px/1 Arial,sans-serif!important;
+  pointer-events:none!important;
+}
+#hdProductImageModal{z-index:2147483600!important;padding:10px!important}
+#hdProductImageModal .hd-product-image-box{
+  position:relative!important;
+  width:min(96vw,720px)!important;
+  max-width:720px!important;
+  height:auto!important;
+  max-height:92dvh!important;
+  padding:12px!important;
+  border-radius:24px!important;
+  overflow:hidden!important;
+  background:#fff!important;
+}
+#hdProductImage{
+  width:100%!important;
+  height:auto!important;
+  max-height:78dvh!important;
+  display:block!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  border-radius:17px!important;
+  background:#f1f2f4!important;
+  image-rendering:auto!important;
+}
+#hdProductImageName{
+  padding:11px 44px 2px!important;
+  color:#171d2b!important;
+  text-align:center!important;
+  font-size:14px!important;
+  line-height:1.3!important;
+  font-weight:900!important;
+}
+.hd-product-image-close{
+  position:absolute!important;
+  top:19px!important;
+  right:19px!important;
+  z-index:2!important;
+  width:38px!important;
+  height:38px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:13px!important;
+  background:rgba(20,27,43,.78)!important;
+  color:#fff!important;
+  box-shadow:0 7px 18px rgba(0,0,0,.22)!important;
+}
+</style>
+<script id="cng-original-hd-menu-image-script">
+window.openHdProductImageById=function(encodedId){
+  let id='';
+  try{id=decodeURIComponent(String(encodedId||''));}catch(e){id=String(encodedId||'');}
+  const item=(typeof menuProducts!=='undefined'&&Array.isArray(menuProducts))
+    ? menuProducts.find(p=>String(p.id)===id)
+    : null;
+  if(!item||!item.icon||String(item.icon).length<=15) return;
+  const image=document.getElementById('hdProductImage');
+  const name=document.getElementById('hdProductImageName');
+  image.src=String(item.icon);
+  image.alt=String(item.name||'Menu item');
+  name.textContent=String(item.name||'');
+  openModal('hdProductImageModal');
+};
 </script>
 
+<style id="cng-customer-feature-pack-style">
+.cng-menu-tools{margin:10px 12px 4px;padding:11px;border-radius:20px;background:#fff;border:1px solid #e7eaf0;box-shadow:0 8px 24px rgba(20,27,43,.07)}
+.cng-menu-search-row{display:grid;grid-template-columns:1fr 42px;gap:8px}
+.cng-menu-search-row input{min-width:0;height:44px;border:1px solid #e2e6ec;border-radius:14px;background:#f7f8fa;color:#171d2b;padding:0 13px;font-family:inherit;font-size:12px;outline:none}
+.cng-menu-search-row input:focus{border-color:#ff941f;box-shadow:0 0 0 3px rgba(255,148,31,.1)}
+.cng-search-clear{border:0;border-radius:14px;background:#f1f3f6;color:#5f6774;font-size:17px}
+.cng-menu-filters{display:flex;gap:7px;overflow-x:auto;padding-top:9px;scrollbar-width:none}.cng-menu-filters::-webkit-scrollbar{display:none}
+.cng-menu-filter{flex:0 0 auto;border:1px solid #e2e6ec;border-radius:12px;background:#fff;color:#69717e;padding:8px 11px;font-size:10px;font-weight:900;white-space:nowrap}
+.cng-menu-filter.active{border-color:#ff941f;background:#fff3e5;color:#d86500}
+.cng-favourite-btn{position:absolute;top:8px;right:8px;z-index:5;width:32px;height:32px;border:0;border-radius:12px;background:rgba(255,255,255,.92);color:#8b929e;box-shadow:0 5px 14px rgba(0,0,0,.14);font-size:18px;display:grid;place-items:center}
+.cng-favourite-btn.active{color:#e53855;background:#fff0f3}
+html.lang-ar .cng-favourite-btn{right:auto;left:8px}
+.cng-product-badges{position:absolute;top:8px;left:8px;z-index:4;display:flex;flex-wrap:wrap;gap:4px;max-width:calc(100% - 48px)}
+html.lang-ar .cng-product-badges{left:auto;right:8px}
+.cng-product-badge{padding:4px 6px;border-radius:8px;color:#fff;font-size:7px;font-weight:900;box-shadow:0 4px 10px rgba(0,0,0,.16)}
+.cng-product-badge.new{background:#316edb}.cng-product-badge.offer{background:#e44732}.cng-product-badge.popular{background:#7b54d8}.cng-product-badge.soldout{background:#656d79}
+.cng-item-desc{min-height:25px;margin-top:4px;color:#7e8693;font-size:9px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.btn-add:disabled{background:#c8cdd5!important;color:#fff!important;box-shadow:none!important;cursor:not-allowed!important}
+.cng-product-details-box{width:min(94vw,390px)!important;max-width:390px!important;padding:0!important;overflow:hidden!important}
+.cng-product-details-image{width:100%;aspect-ratio:4/3;display:grid;place-items:center;background:#f1f2f4;overflow:hidden;font-size:62px}
+.cng-product-details-image img{width:100%;height:100%;object-fit:contain;image-rendering:auto}
+.cng-product-details-body{padding:16px}.cng-product-details-body h2{margin:0;color:#171d2b;font-size:20px}.cng-product-details-body p{margin:7px 0 12px;color:#727b89;font-size:11px;line-height:1.6}
+.cng-detail-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.cng-detail-meta div{padding:9px;border-radius:12px;background:#f5f6f8;color:#262d3a;font-size:10px;line-height:1.45}.cng-detail-meta b{display:block;color:#8a919d;font-size:8px;margin-bottom:2px}
+.cng-detail-actions{display:grid;grid-template-columns:48px 1fr;gap:9px;margin-top:13px}.cng-detail-actions button{min-height:46px;border:0;border-radius:14px;font-weight:900}.cng-detail-fav{background:#fff0f3;color:#e53855;font-size:20px}.cng-detail-add{background:linear-gradient(135deg,#ff871d,#ffad43);color:#fff}.cng-detail-add:disabled{background:#c8cdd5}
+.cng-feature-close{position:absolute;top:12px;right:12px;z-index:3;width:38px;height:38px;border:0;border-radius:13px;background:rgba(20,27,43,.76);color:#fff}
+.cng-cart-suggestions{margin:12px 0;padding:12px;border-radius:17px;background:#fff7ed;border:1px solid #ffe2c1}.cng-cart-suggestions h4{margin:0 0 9px;color:#a94f00;font-size:11px}.cng-suggestion-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cng-suggestion{display:grid;grid-template-columns:42px 1fr 28px;align-items:center;gap:6px;padding:7px;border-radius:12px;background:#fff;border:1px solid #f1e1d0}.cng-suggestion img{width:42px;height:42px;border-radius:9px;object-fit:contain;background:#f1f2f4}.cng-suggestion span{min-width:0;color:#222936;font-size:9px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cng-suggestion button{width:28px;height:28px;border:0;border-radius:9px;background:#ff941f;color:#fff;font-weight:900}
+.cng-repeat-section{margin:8px 0 14px}.cng-repeat-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;color:#252c39;font-size:12px;font-weight:900}.cng-repeat-card{padding:10px;margin-bottom:8px;border:1px solid #e5e8ee;border-radius:14px;background:#f8f9fb}.cng-repeat-card-top{display:flex;justify-content:space-between;gap:8px;color:#252c39;font-size:10px;font-weight:800}.cng-repeat-card-items{margin:5px 0;color:#7b8491;font-size:9px;line-height:1.45}.cng-repeat-btn{width:100%;min-height:34px;border:0;border-radius:10px;background:#fff0df;color:#c75d00;font-size:10px;font-weight:900}
+#cngWhatsAppConfirmBtn{margin-top:9px;background:#21b865!important;color:#fff!important;box-shadow:0 9px 20px rgba(33,184,101,.24)!important}
+@media(max-width:370px){.cng-suggestion-grid{grid-template-columns:1fr}.cng-menu-tools{margin-left:8px;margin-right:8px}.cng-detail-meta{grid-template-columns:1fr}}
+</style>
 
-<script id="cng-loyalty-readonly-guard">
+<script id="cng-customer-feature-pack-script">
 (function(){
-  window.CNG_CUSTOMER_LOYALTY_READ_ONLY = true;
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const keyOf=p=>String(p?.id??'');
+  const unavailable=p=>!!(p?.customerUnavailable||p?.soldOut);
+  const displayName=p=>(isArabic&&p?.nameAr)?p.nameAr:(p?.name||p?.nameAr||'Item');
+  const displayDesc=p=>isArabic?(p?.descriptionAr||p?.descriptionEn||''):(p?.descriptionEn||p?.descriptionAr||'');
+  let menuFilter='all';
+  let detailProductId='';
+  let repeatOrders=[];
+  let favourites=new Set();
+  try{favourites=new Set((JSON.parse(localStorage.getItem('cng_favourites')||'[]')||[]).map(String));}catch(e){}
+
+  function saveFavourites(){localStorage.setItem('cng_favourites',JSON.stringify([...favourites]));}
+  function injectUI(){
+    if(!document.getElementById('cngMenuTools')){
+      const cats=document.getElementById('catSlider');
+      cats?.insertAdjacentHTML('beforebegin',`<div class="cng-menu-tools" id="cngMenuTools">
+        <div class="cng-menu-search-row"><input id="cngMenuSearch" type="search" autocomplete="off"><button type="button" class="cng-search-clear" onclick="cngClearMenuSearch()">×</button></div>
+        <div class="cng-menu-filters">
+          <button class="cng-menu-filter active" data-filter="all" onclick="cngSetMenuFilter('all',this)"></button>
+          <button class="cng-menu-filter" data-filter="favourites" onclick="cngSetMenuFilter('favourites',this)"></button>
+          <button class="cng-menu-filter" data-filter="popular" onclick="cngSetMenuFilter('popular',this)"></button>
+          <button class="cng-menu-filter" data-filter="new" onclick="cngSetMenuFilter('new',this)"></button>
+          <button class="cng-menu-filter" data-filter="offers" onclick="cngSetMenuFilter('offers',this)"></button>
+        </div></div>`);
+      document.getElementById('cngMenuSearch')?.addEventListener('input',()=>renderMenu());
+    }
+    if(!document.getElementById('cngProductDetailsModal')){
+      document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="cngProductDetailsModal" onclick="closeModalOverlay(event,'cngProductDetailsModal')"><div class="modal-box cng-product-details-box" onclick="event.stopPropagation()"><button class="cng-feature-close" onclick="closeModal('cngProductDetailsModal')">✕</button><div class="cng-product-details-image" id="cngDetailImage"></div><div class="cng-product-details-body"><h2 id="cngDetailName"></h2><p id="cngDetailDesc"></p><div class="cng-detail-meta" id="cngDetailMeta"></div><div class="cng-detail-actions"><button class="cng-detail-fav" id="cngDetailFav" onclick="cngToggleFavourite(detailProductId)">♡</button><button class="cng-detail-add" id="cngDetailAdd" onclick="cngAddDetailProduct()"></button></div></div></div></div>`);
+    }
+    if(!document.getElementById('cngCartSuggestions')) document.getElementById('checkoutList')?.insertAdjacentHTML('afterend','<div id="cngCartSuggestions"></div>');
+    if(!document.getElementById('cngRepeatOrdersArea')) document.getElementById('pastOrdersArea')?.insertAdjacentHTML('beforebegin','<div id="cngRepeatOrdersArea"></div>');
+    if(!document.getElementById('cngWhatsAppConfirmBtn')) document.getElementById('btnTrackNow')?.insertAdjacentHTML('afterend','<button class="btn-confirm-add" id="cngWhatsAppConfirmBtn" onclick="cngShareLastOrderWhatsApp()">WhatsApp</button>');
+    updateFeatureLanguage();
+  }
+  function updateFeatureLanguage(){
+    const search=document.getElementById('cngMenuSearch');if(search)search.placeholder=isArabic?'ابحث عن مشروب أو حلى...':'Search drinks or desserts...';
+    const labels=isArabic?{all:'الكل',favourites:'المفضلة',popular:'الأكثر طلباً',new:'جديد',offers:'العروض'}:{all:'All',favourites:'Favourites',popular:'Popular',new:'New',offers:'Offers'};
+    document.querySelectorAll('.cng-menu-filter').forEach(b=>b.textContent=labels[b.dataset.filter]||b.dataset.filter);
+    const wa=document.getElementById('cngWhatsAppConfirmBtn');if(wa)wa.textContent=isArabic?'تأكيد الطلب عبر واتساب':'Confirm on WhatsApp';
+  }
+  function matchesSearch(p,q){
+    if(!q)return true;
+    const hay=[p.name,p.nameAr,p.descriptionEn,p.descriptionAr,p.category,p.ingredientsEn,p.ingredientsAr].map(x=>String(x||'').toLowerCase()).join(' ');
+    return q.split(/\s+/).filter(Boolean).every(w=>hay.includes(w));
+  }
+  function passesFilter(p){
+    if(menuFilter==='favourites')return favourites.has(keyOf(p));
+    if(menuFilter==='popular')return !!p.isPopular||popularityRank.slice(0,6).includes(String(p.name||''));
+    if(menuFilter==='new')return !!p.isNew;
+    if(menuFilter==='offers')return !!p.isOffer;
+    return true;
+  }
+  function badgeHtml(p){
+    const b=[];
+    if(unavailable(p))b.push(`<span class="cng-product-badge soldout">${isArabic?'نفد مؤقتاً':'SOLD OUT'}</span>`);
+    if(p.isOffer)b.push(`<span class="cng-product-badge offer">${isArabic?'عرض':'OFFER'}</span>`);
+    if(p.isNew)b.push(`<span class="cng-product-badge new">${isArabic?'جديد':'NEW'}</span>`);
+    if(p.isPopular||popularityRank.slice(0,3).includes(String(p.name||'')))b.push(`<span class="cng-product-badge popular">${isArabic?'الأكثر طلباً':'POPULAR'}</span>`);
+    return b.length?`<div class="cng-product-badges">${b.join('')}</div>`:'';
+  }
+  function productCards(items,grid){
+    items.forEach(p=>{
+      const id=encodeURIComponent(keyOf(p));
+      const name=displayName(p),desc=displayDesc(p),sold=unavailable(p);
+      const image=(p.icon&&String(p.icon).length>15)
+        ? `<button type="button" class="item-img-wrap" onclick="cngOpenProductDetails('${id}')"><img src="${esc(p.icon)}" alt="${esc(name)}" class="item-img" loading="lazy" decoding="async"></button>`
+        : `<button type="button" class="item-icon-fallback" onclick="cngOpenProductDetails('${id}')">${esc(p.icon||'☕')}</button>`;
+      grid.insertAdjacentHTML('beforeend',`<div class="item-card" style="position:relative;">${badgeHtml(p)}<button class="cng-favourite-btn ${favourites.has(keyOf(p))?'active':''}" onclick="cngToggleFavourite('${id}',event)">${favourites.has(keyOf(p))?'♥':'♡'}</button>${image}<div class="item-info"><div class="item-name">${esc(name)}</div>${desc?`<div class="cng-item-desc">${esc(desc)}</div>`:''}<div class="item-bottom"><div class="item-price">${Number(p.price||0).toFixed(2)} SR</div><button class="btn-add" ${sold?'disabled':''} onclick="quickAddToCart('${id}',this)">${sold?(isArabic?'نفد':'Sold out'):(isArabic?'+ إضافة':'+ Add')}</button></div></div></div>`);
+    });
+  }
+  function enhancedRenderMenu(){
+    injectUI();updateFeatureLanguage();
+    const grid=document.getElementById('menuGrid');if(!grid)return;grid.innerHTML='';
+    const q=String(document.getElementById('cngMenuSearch')?.value||'').trim().toLowerCase();
+    let items=menuProducts.filter(p=>p&&matchesSearch(p,q)&&passesFilter(p));
+    if(activeCategory!=='All Items')items=items.filter(p=>p.category===activeCategory);
+    if(!items.length){grid.innerHTML=`<p style="color:#8b93a1;grid-column:1/-1;text-align:center;padding:28px 8px;">${isArabic?'لا توجد أصناف مطابقة':'No matching items found.'}</p>`;return;}
+    if(activeCategory==='All Items'&&menuFilter==='all'&&!q){
+      const cats=adminCategories.length?adminCategories:[...new Set(items.map(p=>p.category))];
+      cats.forEach(cat=>{const list=items.filter(p=>p.category===cat);if(!list.length)return;grid.insertAdjacentHTML('beforeend',`<div class="cat-heading">${esc(getCatTranslation(cat))}</div>`);productCards(list,grid);});
+    }else productCards(items,grid);
+  }
+  window.cngSetMenuFilter=function(filter,btn){menuFilter=filter;document.querySelectorAll('.cng-menu-filter').forEach(b=>b.classList.toggle('active',b===btn));enhancedRenderMenu();};
+  window.cngClearMenuSearch=function(){const i=document.getElementById('cngMenuSearch');if(i)i.value='';enhancedRenderMenu();};
+  window.cngToggleFavourite=function(encodedId,event){event?.stopPropagation();let id='';try{id=decodeURIComponent(String(encodedId))}catch(e){id=String(encodedId)}if(favourites.has(id))favourites.delete(id);else favourites.add(id);saveFavourites();enhancedRenderMenu();if(detailProductId===id)updateDetailFavourite();};
+  function updateDetailFavourite(){const b=document.getElementById('cngDetailFav');if(b)b.textContent=favourites.has(detailProductId)?'♥':'♡';}
+  window.cngOpenProductDetails=function(encodedId){
+    let id='';try{id=decodeURIComponent(String(encodedId))}catch(e){id=String(encodedId)}
+    const p=menuProducts.find(x=>keyOf(x)===id);if(!p)return;detailProductId=id;window.detailProductId=id;
+    const img=document.getElementById('cngDetailImage');img.innerHTML=(p.icon&&String(p.icon).length>15)?`<img src="${esc(p.icon)}" alt="${esc(displayName(p))}">`:`<span>${esc(p.icon||'☕')}</span>`;
+    document.getElementById('cngDetailName').textContent=displayName(p);document.getElementById('cngDetailDesc').textContent=displayDesc(p)||(isArabic?'تفاصيل الصنف':'Item details');
+    const meta=[];
+    if(p.size)meta.push([isArabic?'الحجم':'Size',p.size]);if(p.calories)meta.push([isArabic?'السعرات':'Calories',`${p.calories} kcal`]);
+    const temp={hot:isArabic?'ساخن':'Hot',cold:isArabic?'بارد':'Cold',both:isArabic?'ساخن أو بارد':'Hot or Cold'}[p.temperature||'both'];meta.push([isArabic?'التقديم':'Served',temp]);
+    const ing=isArabic?(p.ingredientsAr||p.ingredientsEn):(p.ingredientsEn||p.ingredientsAr);if(ing)meta.push([isArabic?'المكونات':'Ingredients',ing]);
+    const alg=isArabic?(p.allergensAr||p.allergensEn):(p.allergensEn||p.allergensAr);if(alg)meta.push([isArabic?'مسببات الحساسية':'Allergens',alg]);
+    document.getElementById('cngDetailMeta').innerHTML=meta.map(x=>`<div><b>${esc(x[0])}</b>${esc(x[1])}</div>`).join('');
+    const add=document.getElementById('cngDetailAdd');add.disabled=unavailable(p);add.textContent=unavailable(p)?(isArabic?'نفد مؤقتاً':'Sold out'):(isArabic?`أضف · ${Number(p.price||0).toFixed(2)} ر.س`:`Add · ${Number(p.price||0).toFixed(2)} SR`);updateDetailFavourite();openModal('cngProductDetailsModal');
+  };
+  window.cngAddDetailProduct=function(){const p=menuProducts.find(x=>keyOf(x)===detailProductId);if(!p||unavailable(p))return;quickAddToCart(encodeURIComponent(detailProductId),document.getElementById('cngDetailAdd'));closeModal('cngProductDetailsModal');};
+  const baseQuickAdd=window.quickAddToCart;
+  window.quickAddToCart=function(id,btn){let raw='';try{raw=decodeURIComponent(String(id))}catch(e){raw=String(id)}const p=menuProducts.find(x=>keyOf(x)===raw);if(!p)return;if(unavailable(p)){showToast(isArabic?'هذا الصنف غير متوفر حالياً':'This item is currently unavailable');return;}baseQuickAdd(p.id,btn);};
+  function injectCartSuggestions(){if(!document.getElementById('cngCartSuggestions'))document.getElementById('checkoutList')?.insertAdjacentHTML('afterend','<div id="cngCartSuggestions"></div>');}
+  function renderSuggestions(){
+    injectCartSuggestions();const box=document.getElementById('cngCartSuggestions');if(!box)return;if(!cart.length){box.innerHTML='';return;}
+    const ids=new Set(cart.map(x=>String(x.id)));const cats=new Set(cart.map(x=>menuProducts.find(p=>keyOf(p)===String(x.id))?.category).filter(Boolean));
+    const picks=menuProducts.filter(p=>!ids.has(keyOf(p))&&!unavailable(p)).sort((a,b)=>(cats.has(b.category)?3:0)+(b.isPopular?2:0)+(b.isOffer?1:0)-((cats.has(a.category)?3:0)+(a.isPopular?2:0)+(a.isOffer?1:0))).slice(0,2);
+    if(!picks.length){box.innerHTML='';return;}
+    box.innerHTML=`<div class="cng-cart-suggestions"><h4>${isArabic?'قد يعجبك أيضاً':'You may also like'}</h4><div class="cng-suggestion-grid">${picks.map(p=>`<div class="cng-suggestion">${p.icon&&String(p.icon).length>15?`<img src="${esc(p.icon)}" alt="">`:'<span>☕</span>'}<span>${esc(displayName(p))}</span><button onclick="quickAddToCart('${encodeURIComponent(keyOf(p))}',this)">+</button></div>`).join('')}</div></div>`;
+  }
+  const baseRenderCart=window.renderCartTab||renderCartTab;
+  window.renderCartTab=function(){baseRenderCart();renderSuggestions();};
+  async function loadRepeatOrders(){
+    injectUI();const area=document.getElementById('cngRepeatOrdersArea');if(!area)return;const phone=(document.getElementById('trackPhone')?.value||localStorage.getItem('cng_phone')||'').trim();if(!phone){area.innerHTML='';return;}
+    try{const snaps=await Promise.all([db.ref('/orders').once('value'),db.ref('/history').once('value'),db.ref('/customerOrderHistory').once('value')]);let orders=snaps[0].val()||[];if(!Array.isArray(orders))orders=Object.values(orders);let hist=snaps[1].val()||[];if(!Array.isArray(hist))hist=Object.values(hist);let privateHist=snaps[2].val()||[];if(!Array.isArray(privateHist))privateHist=Object.values(privateHist);orders=orders.concat(privateHist);hist.forEach(d=>{if(d?.ordersData)orders=orders.concat(Array.isArray(d.ordersData)?d.ordersData:Object.values(d.ordersData));});const unique={};orders.forEach(o=>{if(o?.id)unique[String(o.id)]=o;});repeatOrders=Object.values(unique).filter(o=>String(o?.status||'').toLowerCase()!=='cancelled'&&cngOrderBelongsToThisCustomer(o,phone)&&Array.isArray(o.items)&&o.items.length).sort((a,b)=>(b.timestamp||b.id||0)-(a.timestamp||a.id||0)).slice(0,5);if(!repeatOrders.length){area.innerHTML='';return;}area.innerHTML=`<div class="cng-repeat-section"><div class="cng-repeat-title"><span>${isArabic?'اطلب مرة أخرى':'Order again'}</span><small>${repeatOrders.length}</small></div>${repeatOrders.map(o=>`<div class="cng-repeat-card"><div class="cng-repeat-card-top"><span>#${esc(o.id)}</span><span>${Number(o.total||0).toFixed(2)} SR</span></div><div class="cng-repeat-card-items">${esc(o.items.map(i=>`${i.qty||1}× ${i.name}`).join(', '))}</div><button class="cng-repeat-btn" onclick="cngRepeatOrder('${encodeURIComponent(String(o.id))}')">${isArabic?'إعادة الطلب':'Repeat order'}</button></div>`).join('')}</div>`;}catch(e){area.innerHTML='';}
+  }
+  window.cngRepeatOrder=function(encodedId){let id='';try{id=decodeURIComponent(String(encodedId))}catch(e){id=String(encodedId)}const o=repeatOrders.find(x=>String(x.id)===id);if(!o)return;let added=0,skipped=0;(o.items||[]).forEach(i=>{const p=menuProducts.find(x=>String(x.id)===String(i.id))||menuProducts.find(x=>String(x.name).toLowerCase()===String(i.name).toLowerCase());if(!p||unavailable(p)){skipped++;return;}const existing=cart.find(c=>String(c.id)===keyOf(p)&&!c.note);const qty=Math.max(1,Number(i.qty)||1);if(existing)existing.qty+=qty;else cart.push({id:p.id,name:p.name,price:Number(p.price)||0,qty,note:''});added+=qty;});updateCartBadge();if(added){document.querySelector('.bottom-nav .nav-item[data-tab="cart"]')?.click();showToast(isArabic?`تمت إضافة ${added} أصناف إلى السلة`:`${added} item(s) added to cart`);}else showToast(isArabic?'لا تتوفر أصناف هذا الطلب حالياً':'These items are currently unavailable');if(skipped&&added)setTimeout(()=>showToast(isArabic?`تم تخطي ${skipped} صنف غير متوفر`:`Skipped ${skipped} unavailable item(s)`),800);};
+  const baseFetchHistory=window.fetchOrderHistory||fetchOrderHistory;
+  window.fetchOrderHistory=function(){baseFetchHistory();loadRepeatOrders();};
+  window.cngUpdateWhatsAppConfirmButton=function(){const b=document.getElementById('cngWhatsAppConfirmBtn');if(b)b.style.display=(window.cngLastPlacedOrder||localStorage.getItem('cng_last_order'))?'block':'none';};
+  window.cngShareLastOrderWhatsApp=function(){let o=window.cngLastPlacedOrder;try{o=o||JSON.parse(localStorage.getItem('cng_last_order')||'null')}catch(e){}if(!o)return;const href=document.getElementById('waLink')?.getAttribute('href')||'';const phone=(href.match(/wa\.me\/(\d+)/)||[])[1];if(!phone){showToast(isArabic?'رقم واتساب المتجر غير مضاف':'Shop WhatsApp number is not set');return;}const items=(o.items||[]).map(i=>`${i.qty||1}× ${i.name}`).join('\n');const msg=isArabic?`تأكيد طلب كوب آند جو\nرقم الطلب: ${o.id}\n${items}\nالإجمالي: ${Number(o.total||0).toFixed(2)} ر.س\nالاسم: ${o.customerName||''}`:`Cup And Go order confirmation\nOrder: ${o.id}\n${items}\nTotal: ${Number(o.total||0).toFixed(2)} SR\nName: ${o.customerName||''}`;window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,'_blank','noopener');};
+  const baseToggle=window.toggleLanguage;
+  window.toggleLanguage=function(){baseToggle();setTimeout(()=>{updateFeatureLanguage();enhancedRenderMenu();renderSuggestions();loadRepeatOrders();},0);};
+  injectUI();window.cngLastPlacedOrder=null;try{window.cngLastPlacedOrder=JSON.parse(localStorage.getItem('cng_last_order')||'null')}catch(e){}window.cngUpdateWhatsAppConfirmButton();
+  window.renderMenu=enhancedRenderMenu;enhancedRenderMenu();
 })();
 </script>
+
+<style id="cng-customer-universal-web-compat">
+html{width:100%;min-height:100%;overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}body{width:100%;min-height:100vh;min-height:100dvh;overflow-x:hidden;box-sizing:border-box}*,*::before,*::after{box-sizing:border-box}img,video,canvas,svg{max-width:100%}.tab-content{width:100%;max-width:900px;margin-left:auto;margin-right:auto}.modal,.sheet-overlay{padding-inline:max(10px,env(safe-area-inset-left),env(safe-area-inset-right));padding-block:max(10px,env(safe-area-inset-top),env(safe-area-inset-bottom))}.modal-box{max-width:min(430px,100%)!important;max-height:calc(100vh - 20px)!important;max-height:calc(100dvh - 20px)!important;overflow-y:auto;-webkit-overflow-scrolling:touch}.bottom-sheet{max-height:calc(100vh - 12px);max-height:calc(100dvh - 12px);padding-bottom:max(18px,env(safe-area-inset-bottom))}.bottom-nav{bottom:max(8px,env(safe-area-inset-bottom));left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));max-width:680px;margin-left:auto;margin-right:auto}button,a,[onclick]{touch-action:manipulation;-webkit-tap-highlight-color:transparent}input,select,textarea{font-size:16px!important;min-width:0}.product-card,.order-card,.profile-card-main,.profile-hero-card{min-width:0}.item-name,.cart-row-name,.profile-hero-copy{overflow-wrap:anywhere}#checkoutList{width:100%;max-height:min(38vh,330px)!important;overflow-x:hidden!important;overflow-y:auto!important;margin:0 0 12px!important;padding:4px 2px 8px;scroll-padding-top:4px}.premium-cart-row{width:100%!important;min-width:0;margin:0 0 10px!important}.cart-row-top,.cart-row-controls{min-width:0}.cart-row-price{white-space:nowrap}.cart-total-summary{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;margin:10px 0 12px;padding:14px 16px;border:1px solid rgba(232,179,47,.34);border-radius:18px;background:linear-gradient(135deg,#fffaf0,#fff);box-shadow:0 9px 24px rgba(97,65,11,.09);color:#18202e}.cart-total-copy{display:flex;flex-direction:column;gap:3px;min-width:0}.cart-total-copy small{font-size:10px;font-weight:900;letter-spacing:1.1px;color:#8b6417}.cart-total-copy>span{font-size:12px;color:#77808d}.cart-total-summary strong{font-family:'Inter',sans-serif;font-size:clamp(20px,5.5vw,25px);line-height:1;color:#cf9212;white-space:nowrap}[dir="rtl"] .cart-total-summary{direction:rtl}@media(min-width:700px){.menu-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;max-width:860px!important;margin-left:auto!important;margin-right:auto!important}.home-cat-grid{max-width:820px;margin-left:auto;margin-right:auto}.slider-container,.qr-section{max-width:820px;margin-left:auto!important;margin-right:auto!important}.header{padding-left:max(28px,calc((100vw - 880px)/2))!important;padding-right:max(28px,calc((100vw - 880px)/2))!important}.profile-page-wrap{max-width:760px!important}#tab-cart>div{max-width:720px;margin-inline:auto!important}}@media(min-width:1100px){.menu-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}}@media(max-width:340px){.header{padding-left:5px!important;padding-right:5px!important}.home-cat-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.bottom-nav{left:4px!important;right:4px!important}.nav-item{font-size:8px!important}.nav-item i{font-size:18px!important}.cart-total-summary{padding:12px}.cart-total-summary strong{font-size:19px}.cart-row-controls{gap:6px}}@media(max-height:500px) and (orientation:landscape){.modal-box{max-height:calc(100dvh - 12px)!important}.bottom-nav{height:66px!important}.tab-content{padding-bottom:76px!important}#checkoutList{max-height:190px!important}}@supports not (height:100dvh){body{min-height:-webkit-fill-available}}
+</style>
 
 </body>
 </html>
