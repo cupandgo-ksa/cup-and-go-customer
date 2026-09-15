@@ -1449,8 +1449,12 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
             return cat; 
         }
 
+        function customerProductCategory(p) { return String((p && p.category) || 'Other').trim() || 'Other'; }
+        function getCustomerMenuCategories(items = menuProducts) {
+            return [...new Set([...(adminCategories || []), ...items.map(customerProductCategory)].filter(Boolean))];
+        }
         function renderCategories() {
-            let cats = adminCategories.length > 0 ? adminCategories : ['Coffee', 'Cold Drinks', 'Desserts'];
+            let cats = getCustomerMenuCategories();
 
             // Home Explore Menu was intentionally removed in Premium V3.
             // Keep this renderer null-safe so Firebase category updates never crash the app.
@@ -1492,16 +1496,16 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         function renderMenu() {
             let grid = document.getElementById('menuGrid'); grid.innerHTML = '';
             if(activeCategory === 'All Items') {
-                let catsToRender = adminCategories.length > 0 ? adminCategories : [...new Set(menuProducts.map(p => p.category))]; let hasAnyItems = false;
+                let catsToRender = getCustomerMenuCategories(); let hasAnyItems = false;
                 catsToRender.forEach(cat => { 
-                    let catProds = menuProducts.filter(p => p.category === cat); 
+                    let catProds = menuProducts.filter(p => customerProductCategory(p) === cat); 
                     if(catProds.length > 0) { 
                         hasAnyItems = true; let dispName = getCatTranslation(cat);
                         grid.innerHTML += `<div class="cat-heading">${dispName}</div>`; renderProductsToGrid(catProds, grid); 
                     } 
                 });
                 if(!hasAnyItems) grid.innerHTML = `<p style="color:var(--muted);grid-column:span 2;text-align:center;">No items found.</p>`;
-            } else { let filtered = menuProducts.filter(p => p.category === activeCategory); if(filtered.length === 0) { grid.innerHTML = `<p style="color:var(--muted);grid-column:span 2;text-align:center;">No items found.</p>`; return; } renderProductsToGrid(filtered, grid); }
+            } else { let filtered = menuProducts.filter(p => customerProductCategory(p) === activeCategory); if(filtered.length === 0) { grid.innerHTML = `<p style="color:var(--muted);grid-column:span 2;text-align:center;">No items found.</p>`; return; } renderProductsToGrid(filtered, grid); }
         }
         function renderProductsToGrid(itemsArray, gridElement) {
             itemsArray.forEach((p, index) => {
@@ -3348,11 +3352,11 @@ html.lang-ar .cng-product-badges{left:auto;right:8px}
     const grid=document.getElementById('menuGrid');if(!grid)return;grid.innerHTML='';
     const q=String(document.getElementById('cngMenuSearch')?.value||'').trim().toLowerCase();
     let items=menuProducts.filter(p=>p&&matchesSearch(p,q)&&passesFilter(p));
-    if(activeCategory!=='All Items')items=items.filter(p=>p.category===activeCategory);
+    if(activeCategory!=='All Items')items=items.filter(p=>customerProductCategory(p)===activeCategory);
     if(!items.length){grid.innerHTML=`<p style="color:#8b93a1;grid-column:1/-1;text-align:center;padding:28px 8px;">${isArabic?'لا توجد أصناف مطابقة':'No matching items found.'}</p>`;return;}
     if(activeCategory==='All Items'&&menuFilter==='all'&&!q){
-      const cats=adminCategories.length?adminCategories:[...new Set(items.map(p=>p.category))];
-      cats.forEach(cat=>{const list=items.filter(p=>p.category===cat);if(!list.length)return;grid.insertAdjacentHTML('beforeend',`<div class="cat-heading">${esc(getCatTranslation(cat))}</div>`);productCards(list,grid);});
+      const cats=getCustomerMenuCategories(items);
+      cats.forEach(cat=>{const list=items.filter(p=>customerProductCategory(p)===cat);if(!list.length)return;grid.insertAdjacentHTML('beforeend',`<div class="cat-heading">${esc(getCatTranslation(cat))}</div>`);productCards(list,grid);});
     }else productCards(items,grid);
   }
   window.cngSetMenuFilter=function(filter,btn){menuFilter=filter;document.querySelectorAll('.cng-menu-filter').forEach(b=>b.classList.toggle('active',b===btn));enhancedRenderMenu();};
@@ -3430,6 +3434,39 @@ button.item-img-wrap,.item-img-wrap{
   margin:0!important;
   display:block!important;
   image-rendering:auto!important;
+}
+.cng-product-details-box{
+  width:min(94vw,430px)!important;
+  max-width:430px!important;
+  max-height:calc(100dvh - 20px)!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+.cng-product-details-image{
+  width:100%!important;
+  height:auto!important;
+  aspect-ratio:4/5!important;
+  flex:0 0 auto!important;
+  display:grid!important;
+  place-items:center!important;
+  overflow:hidden!important;
+  background:#f1f2f4!important;
+}
+.cng-product-details-image img{
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  display:block!important;
+  padding:0!important;
+  margin:0!important;
+  image-rendering:auto!important;
+}
+@media(max-height:650px),(orientation:landscape) and (max-height:700px){
+  .cng-product-details-image{max-height:58dvh!important;aspect-ratio:auto!important;min-height:280px!important;}
+  .cng-product-details-image img{object-fit:contain!important;}
 }
 </style>
 </body>
