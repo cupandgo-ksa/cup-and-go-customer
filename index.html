@@ -959,7 +959,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
                         <small id="cartTotalLabel">TOTAL AMOUNT</small>
                         <span id="cartTotalItems">0 items</span>
                     </div>
-                    <strong><span id="cartTotalAmount">0.00</span> <span id="cartTotalCurrency">SR</span></strong>
+                    <strong><span id="cartTotalAmount">0.00</span> <span id="cartTotalCurrency">﷼</span></strong>
                 </div>
 
                 <div class="cng-payment-card" id="cngPaymentCard">
@@ -1042,7 +1042,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         <button class="close-sheet-btn" onclick="closeItemSheet()">✕</button>
         <div class="sheet-handle"></div>
         <h2 class="sheet-title" id="sheetItemName">Item Name</h2>
-        <div class="sheet-price"><span id="sheetItemPrice">0</span> SR</div>
+        <div class="sheet-price"><span id="sheetItemPrice">0</span> ﷼</div>
 
         <span class="custom-label" id="lblPreferences">Quick Preferences</span>
         <div class="quick-tags">
@@ -1061,7 +1061,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
             <div class="qty-btn" onclick="changeSheetQty(1)">+</div>
         </div>
 
-        <button class="btn-confirm-add" onclick="confirmAddToCart()" id="btnAddFinal">Add to Cart - <span id="sheetTotalPrice">0</span> SR</button>
+        <button class="btn-confirm-add" onclick="confirmAddToCart()" id="btnAddFinal">Add to Cart - <span id="sheetTotalPrice">0</span> ﷼</button>
     </div>
 
     <!-- MODALS: ORDERS & NOTIFS -->
@@ -1515,7 +1515,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
                 let badge='';
                 if(rank===0 && (popularityByName[p.name]||0)>0) badge=`<div class="bestseller-badge">${isArabic?dict.ar.bestSeller:dict.en.bestSeller}</div>`;
                 else if(rank>0 && rank<3) badge=`<div class="popular-badge">${isArabic?dict.ar.popular:dict.en.popular}</div>`;
-                gridElement.innerHTML += `<div class="item-card" style="position:relative;">${badge}${iconHtml}<div class="item-info"><div class="item-name">${p.name}</div><div class="item-bottom"><div class="item-price">${p.price} SR</div><button class="btn-add" onclick="quickAddToCart(${p.id}, this)">${dict[isArabic?'ar':'en'].addBtn}</button></div></div></div>`;
+                gridElement.innerHTML += `<div class="item-card" style="position:relative;">${badge}${iconHtml}<div class="item-info"><div class="item-name">${p.name}</div><div class="item-bottom"><div class="item-price">${p.price} ﷼</div><button class="btn-add" onclick="quickAddToCart(${p.id}, this)">${dict[isArabic?'ar':'en'].addBtn}</button></div></div></div>`;
             });
         }
 
@@ -1548,7 +1548,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
             form.style.display = 'block'; list.innerHTML = ''; let totalAmt = 0;
             cart.forEach((c, idx) => {
                 totalAmt += c.price * c.qty; let noteHtml = c.note ? `<div style="font-size:11px;color:var(--orange);margin-top:5px;">📝 ${c.note}</div>` : '';
-                list.innerHTML += `<div class="cart-item premium-cart-row"><div class="cart-row-top"><div class="cart-row-name">${c.name}</div><div class="cart-row-price">${(c.price * c.qty).toFixed(2)} SR</div></div><div class="cart-row-controls"><button onclick="changeCartQty(${idx},-1)">−</button><b>${c.qty}</b><button onclick="changeCartQty(${idx},1)">+</button><button class="cart-remove" onclick="removeCartItem(${idx})">Remove</button></div>${noteHtml}</div>`;
+                list.innerHTML += `<div class="cart-item premium-cart-row"><div class="cart-row-top"><div class="cart-row-name">${c.name}</div><div class="cart-row-price">${(c.price * c.qty).toFixed(2)} ﷼</div></div><div class="cart-row-controls"><button onclick="changeCartQty(${idx},-1)">−</button><b>${c.qty}</b><button onclick="changeCartQty(${idx},1)">+</button><button class="cart-remove" onclick="removeCartItem(${idx})">Remove</button></div>${noteHtml}</div>`;
             });
             const totalQty = cart.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
             const totalAmountEl = document.getElementById('cartTotalAmount'); if(totalAmountEl) totalAmountEl.textContent = totalAmt.toFixed(2);
@@ -1655,7 +1655,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
                         }
                         let diff = Math.floor((Date.now() - o.timestamp) / 1000); let timeLeft = CANCEL_WINDOW_SEC - diff;
                         let cancelBtnHtml = (st === 'new' && timeLeft > 0) ? `<button class="btn-cancel-timer" data-time="${o.timestamp}" onclick="cancelMyOrder('${o.id}')">${isArabic ? 'إلغاء' : 'Cancel'} (${timeLeft}s)</button>` : '';
-                        html += `<div class="order-card" style="border-color:${colorTxt};"><div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:5px;"><strong class="cng-live-status" style="color:${colorTxt};"><span>${statusTxt}</span></strong><b style="color:#fff; font-family:'Inter',sans-serif;white-space:nowrap;">${parseFloat(o.total).toFixed(2)} SR</b></div><div class="cng-three-step-track red-live-track stage-${stageNo||1}" style="margin:12px 0 9px;">
+                        html += `<div class="order-card" style="border-color:${colorTxt};"><div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:5px;"><strong class="cng-live-status" style="color:${colorTxt};"><span>${statusTxt}</span></strong><b style="color:#fff; font-family:'Inter',sans-serif;white-space:nowrap;">${parseFloat(o.total).toFixed(2)} ﷼</b></div><div class="cng-three-step-track red-live-track stage-${stageNo||1}" style="margin:12px 0 9px;">
 <div style="position:relative;height:4px;background:rgba(255,255,255,.12);border-radius:99px;margin:0 12px 8px;"><div style="height:100%;width:${stagePct}%;background:${colorTxt};border-radius:99px;transition:width .35s ease;"></div></div>
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;text-align:center;font-size:9px;line-height:1.25;">
 <div class="step-one" style="color:${stagePct>=33?'#252b37':'var(--muted)'};"><b class="step-num">1</b>${isArabic?'تم استلام الطلب':'Order Received'}</div>
@@ -1680,7 +1680,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
                     myPast.forEach(o => {
                         let itemsTxt = (o.items || []).map(i => `${i.qty}x ${i.name}`).join(', ');
                         const cancelled=String(o.status||'').toLowerCase()==='cancelled';const statusText=cancelled?(isArabic?'ملغي':'Cancelled'):(isArabic?dict.ar.comp:dict.en.comp);
-                        html += `<div class="order-card"><div style="display:flex; justify-content:space-between; margin-bottom:3px;"><strong style="color:${cancelled?'#ff5252':'#00E676'};">${cancelled?'❌':'✅'} ${statusText}</strong><b style="color:var(--orange); font-family:'Inter',sans-serif;">${parseFloat(o.total).toFixed(2)} SR</b></div><div style="font-size:11px; color:var(--muted);">${itemsTxt}</div><div style="font-size:9px; color:#888; margin-top:3px; font-family:'Inter',sans-serif;">${o.time || new Date(o.timestamp).toLocaleDateString()}</div></div>`;
+                        html += `<div class="order-card"><div style="display:flex; justify-content:space-between; margin-bottom:3px;"><strong style="color:${cancelled?'#ff5252':'#00E676'};">${cancelled?'❌':'✅'} ${statusText}</strong><b style="color:var(--orange); font-family:'Inter',sans-serif;">${parseFloat(o.total).toFixed(2)} ﷼</b></div><div style="font-size:11px; color:var(--muted);">${itemsTxt}</div><div style="font-size:9px; color:#888; margin-top:3px; font-family:'Inter',sans-serif;">${o.time || new Date(o.timestamp).toLocaleDateString()}</div></div>`;
                     });
                     pastArea.innerHTML = html;
                 }
@@ -3281,7 +3281,7 @@ html.lang-ar .cng-product-badges{left:auto;right:8px}
   const keyOf=p=>String(p?.id??'');
   const unavailable=p=>!!(p?.customerUnavailable||p?.soldOut);
   const displayName=p=>(isArabic&&p?.nameAr)?p.nameAr:(p?.name||p?.nameAr||'Item');
-  const displayDesc=p=>isArabic?(p?.descriptionAr||p?.descriptionEn||''):(p?.descriptionEn||p?.descriptionAr||'');
+  const displayDesc=p=>isArabic?(p?.descriptionAr||p?.descriptionEn||p?.description||''):(p?.descriptionEn||p?.description||p?.descriptionAr||'');
   let menuFilter='all';
   let detailProductId='';
   let repeatOrders=[];
@@ -3344,7 +3344,7 @@ html.lang-ar .cng-product-badges{left:auto;right:8px}
       const image=(p.icon&&String(p.icon).length>15)
         ? `<button type="button" class="item-img-wrap" onclick="cngOpenProductDetails('${id}')"><img src="${esc(p.icon)}" alt="${esc(name)}" class="item-img" loading="lazy" decoding="async"></button>`
         : `<button type="button" class="item-icon-fallback" onclick="cngOpenProductDetails('${id}')">${esc(p.icon||'☕')}</button>`;
-      grid.insertAdjacentHTML('beforeend',`<div class="item-card" style="position:relative;">${badgeHtml(p)}<button class="cng-favourite-btn ${favourites.has(keyOf(p))?'active':''}" onclick="cngToggleFavourite('${id}',event)">${favourites.has(keyOf(p))?'♥':'♡'}</button>${image}<div class="item-info"><div class="item-name">${esc(name)}</div>${desc?`<div class="cng-item-desc">${esc(desc)}</div>`:''}<div class="item-bottom"><div class="item-price">${Number(p.price||0).toFixed(2)} SR</div><button class="btn-add" ${sold?'disabled':''} onclick="quickAddToCart('${id}',this)">${sold?(isArabic?'نفد':'Sold out'):(isArabic?'+ إضافة':'+ Add')}</button></div></div></div>`);
+      grid.insertAdjacentHTML('beforeend',`<div class="item-card" style="position:relative;">${badgeHtml(p)}<button class="cng-favourite-btn ${favourites.has(keyOf(p))?'active':''}" onclick="cngToggleFavourite('${id}',event)">${favourites.has(keyOf(p))?'♥':'♡'}</button>${image}<div class="item-info"><div class="item-name">${esc(name)}</div>${desc?`<div class="cng-item-desc">${esc(desc)}</div>`:''}<div class="item-bottom"><div class="item-price">${Number(p.price||0).toFixed(2)} ﷼</div><button class="btn-add" ${sold?'disabled':''} onclick="quickAddToCart('${id}',this)">${sold?(isArabic?'نفد':'Sold out'):(isArabic?'+ إضافة':'+ Add')}</button></div></div></div>`);
     });
   }
   function enhancedRenderMenu(){
@@ -3374,7 +3374,7 @@ html.lang-ar .cng-product-badges{left:auto;right:8px}
     const ing=isArabic?(p.ingredientsAr||p.ingredientsEn):(p.ingredientsEn||p.ingredientsAr);if(ing)meta.push([isArabic?'المكونات':'Ingredients',ing]);
     const alg=isArabic?(p.allergensAr||p.allergensEn):(p.allergensEn||p.allergensAr);if(alg)meta.push([isArabic?'مسببات الحساسية':'Allergens',alg]);
     document.getElementById('cngDetailMeta').innerHTML=meta.map(x=>`<div><b>${esc(x[0])}</b>${esc(x[1])}</div>`).join('');
-    const add=document.getElementById('cngDetailAdd');add.disabled=unavailable(p);add.textContent=unavailable(p)?(isArabic?'نفد مؤقتاً':'Sold out'):(isArabic?`أضف · ${Number(p.price||0).toFixed(2)} ر.س`:`Add · ${Number(p.price||0).toFixed(2)} SR`);updateDetailFavourite();openModal('cngProductDetailsModal');
+    const add=document.getElementById('cngDetailAdd');add.disabled=unavailable(p);add.textContent=unavailable(p)?(isArabic?'نفد مؤقتاً':'Sold out'):(isArabic?`أضف · ${Number(p.price||0).toFixed(2)} ﷼`:`Add · ${Number(p.price||0).toFixed(2)} ﷼`);updateDetailFavourite();openModal('cngProductDetailsModal');
   };
   window.cngAddDetailProduct=function(){const p=menuProducts.find(x=>keyOf(x)===detailProductId);if(!p||unavailable(p))return;quickAddToCart(encodeURIComponent(detailProductId),document.getElementById('cngDetailAdd'));closeModal('cngProductDetailsModal');};
   const baseQuickAdd=window.quickAddToCart;
@@ -3469,5 +3469,39 @@ button.item-img-wrap,.item-img-wrap{
   .cng-product-details-image img{object-fit:contain!important;}
 }
 </style>
+<script id="cng-saudi-riyal-symbol">
+(function(){
+  const replaceCurrency=text=>String(text||'').replace(/(?:\bSAR\b|\bSR\b|ر\.س)/g,'﷼');
+  function update(root=document.body){
+    if(!root)return;
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(node=>{const next=replaceCurrency(node.nodeValue);if(next!==node.nodeValue)node.nodeValue=next;});
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    update();
+    new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(node=>{
+      if(node.nodeType===Node.TEXT_NODE){const next=replaceCurrency(node.nodeValue);if(next!==node.nodeValue)node.nodeValue=next;}
+      else if(node.nodeType===Node.ELEMENT_NODE)update(node);
+    }))).observe(document.body,{childList:true,subtree:true});
+  });
+})();
+</script>
+<style id="cng-fast-menu-images-style">
+.cng-img-loading{position:relative;overflow:hidden;background:#efe8e1!important}.cng-img-loading::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(105deg,transparent 28%,rgba(255,255,255,.68) 46%,transparent 64%);transform:translateX(-110%);animation:cngImageShimmer 1.15s ease-in-out infinite}.cng-img-loaded::after{display:none}@keyframes cngImageShimmer{to{transform:translateX(110%)}}
+</style>
+<script id="cng-fast-menu-images-script">
+(function(){
+  const selector='img.admin-product-img,img.item-img,img.item-image';
+  function prepare(){
+    document.querySelectorAll(selector).forEach((img,index)=>{
+      if(img.dataset.cngPrepared)return;img.dataset.cngPrepared='1';
+      const first=index<6;img.loading=first?'eager':'lazy';img.decoding='async';img.setAttribute('fetchpriority',first?'high':'low');
+      const box=img.parentElement;if(box){box.classList.add('cng-img-loading');const done=()=>{box.classList.remove('cng-img-loading');box.classList.add('cng-img-loaded')};if(img.complete)done();else{img.addEventListener('load',done,{once:true});img.addEventListener('error',done,{once:true})}}
+    });
+  }
+  document.addEventListener('DOMContentLoaded',()=>{prepare();new MutationObserver(prepare).observe(document.body,{childList:true,subtree:true})});
+})();
+</script>
 </body>
 </html>
