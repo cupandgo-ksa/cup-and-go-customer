@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Cup And Go - VisionOS Glass App</title>
+    <title>Cup And Go | Customer App</title>
+    <meta name="description" content="Cup And Go customer app — browse products, order, track orders and manage your profile.">
+    <link rel="canonical" href="https://cupandgoksa.com/">
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -1094,7 +1096,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         window.closeModal = function(id) { let m = document.getElementById(id); m.classList.remove('open'); setTimeout(() => m.style.display = 'none', 300); }
         window.closeModalOverlay = function(e, id) { if(e.target.id === id) window.closeModal(id); }
 
-        const MY_QR_MENU_LINK = "https://cupandgo-ksa.github.io/cup-and-go-menu/";
+        const MY_QR_MENU_LINK = "https://cupandgoksa.com/menu/";
         const firebaseConfig = { apiKey: "AIzaSyAoYsT80oNc505TgobYwTv0T7YfUF_fWRs", authDomain: "cup-and-go-pos-e0ad1.firebaseapp.com", databaseURL: "https://cup-and-go-pos-e0ad1-default-rtdb.firebaseio.com", projectId: "cup-and-go-pos-e0ad1" };
         firebase.initializeApp(firebaseConfig); const db = firebase.database();
 
