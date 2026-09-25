@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <!-- Cup And Go SEO START -->
-    <title>Cup And Go | كوب أند جو | Coffee Shop Saudi Arabia</title>
-    <meta name="description" content="Cup And Go | كوب أند جو — Saudi Arabia coffee shop. Browse coffee, V60, matcha, hibiscus, desserts and offers, and order online.">
+    <title>كوب أند جو | Cup And Go | الطلب والقائمة</title>
+    <meta name="description" content="كوب أند جو | Cup And Go في السعودية — اطلب القهوة وV60 والماتشا والكركديه والحلويات، وتصفح القائمة والعروض.">
     <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
     <meta name="googlebot" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
     <meta name="application-name" content="Cup And Go">
@@ -13,14 +13,14 @@
     <link rel="canonical" href="https://cupandgoksa.com/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Cup And Go">
-    <meta property="og:title" content="Cup And Go | كوب أند جو">
-    <meta property="og:description" content="Coffee, V60, matcha, hibiscus, desserts and offers from Cup And Go in Saudi Arabia.">
+    <meta property="og:title" content="كوب أند جو | Cup And Go">
+    <meta property="og:description" content="قهوة وV60 وماتشا وكركديه وحلويات وعروض من كوب أند جو في السعودية.">
     <meta property="og:url" content="https://cupandgoksa.com/">
     <meta property="og:locale" content="en_US">
     <meta property="og:locale:alternate" content="ar_SA">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Cup And Go | كوب أند جو">
-    <meta name="twitter:description" content="Cup And Go Saudi Arabia — customer app, menu and online ordering.">
+    <meta name="twitter:title" content="كوب أند جو | Cup And Go">
+    <meta name="twitter:description" content="كوب أند جو في السعودية — القائمة والطلب والعروض.">
     <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -172,7 +172,7 @@
 
         /* QR CODE */
         .qr-section { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border-light); border-radius: 20px; margin: 0 15px 20px; padding: 20px; text-align: center; box-shadow: var(--shadow); }
-        .qr-title { font-size: 14px; font-weight: 900; color: var(--orange); margin-bottom: 5px; }
+        .qr-title { font-size: 14px; font-weight: 900; color: var(--orange); margin-bottom: 5px; text-decoration:none; display:block; }
         .qr-sub { font-size: 10px; color: var(--muted); margin-bottom: 15px; }
         #qrcode { display: flex; justify-content: center; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 12px; width: max-content; margin: 0 auto; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
 
@@ -980,7 +980,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
 
         <!-- QR CODE — moved up directly below banner -->
         <div class="qr-section">
-            <div class="qr-title" id="lblQrTitle">Scan Full Menu</div>
+            <a class="qr-title" id="lblQrTitle" href="https://cupandgoksa.com/menu/" aria-label="قائمة كوب أند جو الكاملة">قائمة كوب أند جو الكاملة | Full Menu</a>
             <div class="qr-sub" id="lblQrSub">Share this QR code with your friends</div>
             <div id="qrcode"></div>
         </div>
@@ -1177,8 +1177,8 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         let launchAdTimer = null; let pendingDialogResolver = null;
 
         const dict = {
-            en: { shopName: "Cup And Go", allItems: "All Items", addBtn: "+ Add", pref: "Quick Preferences", note: "Special Instructions", phNote: "e.g. Extra hot...", orderTitle: "Your Order", phName: "Your Name", phPhone: "Mobile Number", phCar: "Car Number (Optional)", cancel: "Cancel", confirm: "Confirm Order", myOrders: "My Orders", history: "History", phTrack: "Mobile Number", prep: "Preparing...", comp: "Completed", notifTit: "Notifications", navHome: "Home", navCart: "Cart", navAbout: "About", lblQr: "Scan Full Menu", subQr: "Share this QR with friends", readyTit: "Order Ready!", readySub: "Please collect your order at the counter.", aboutDesc: "Welcome to Cup And Go, where passion meets coffee. We serve the finest blends and freshly baked desserts tailored just for you.", succTit: "Order Received!", succMsg: "Your order was sent to the cashier. Waiting for confirmation.", lblEta: "Estimated Wait Time", lblMin: "Minutes", btnTrackNow: "Track Order", tagIce: "Extra Ice", tagHot: "Hot 🔥", tagCold: "Cold 🧊", addFinal: "Add to Cart - ", promoTit: "أهلاً وسهلاً بكم", promoDesc: "شكراً لزيارتكم كوب آند جو. استمتعوا بأجود أنواع القهوة والحلويات الطازجة المُعدّة خصيصاً لكم.", btnPromoCont: "متابعة", exploreMenu:"Explore Menu", tapCategory:"Choose a category", bestSeller:"BEST SELLER", popular:"POPULAR", skipIntro:"Skip Intro" },
-            ar: { shopName: "كوب آند جو", allItems: "الكل", addBtn: "+ إضافة", pref: "خيارات سريعة", note: "ملاحظات خاصة", phNote: "مثال: ساخن جداً...", orderTitle: "طلبك", phName: "الاسم", phPhone: "رقم الجوال", phCar: "رقم السيارة (اختياري)", cancel: "إلغاء", confirm: "تأكيد الطلب", myOrders: "طلباتي", history: "السجل", phTrack: "رقم الجوال", prep: "جاري التحضير...", comp: "مكتمل", notifTit: "الإشعارات", navHome: "الرئيسية", navCart: "السلة", navAbout: "حول", lblQr: "امسح القائمة", subQr: "شارك الكود مع أصدقائك", readyTit: "طلبك جاهز!", readySub: "يرجى استلام طلبك من الكاونتر.", aboutDesc: "مرحباً بك في كوب آند جو، حيث يلتقي الشغف بالقهوة. نقدم لك أفضل الخلطات والحلويات الطازجة المخبوزة خصيصاً لك.", succTit: "تم استلام الطلب!", succMsg: "جاري تحضير طلبك اللذيذ.", lblEta: "الوقت المقدر للانتظار", lblMin: "دقائق", btnTrackNow: "تتبع الطلب", tagIce: "زيادة ثلج", tagHot: "ساخن 🔥", tagCold: "بارد 🧊", addFinal: "أضف إلى السلة - ", promoTit: "أهلاً وسهلاً بكم", promoDesc: "شكراً لزيارتكم كوب آند جو. استمتعوا بأجود أنواع القهوة والحلويات الطازجة المُعدّة خصيصاً لكم.", btnPromoCont: "متابعة", exploreMenu:"عرض القائمة", tapCategory:"اختر القسم", bestSeller:"الأكثر طلباً", popular:"رائج", skipIntro:"تخطي المقدمة" }
+            en: { shopName: "Cup And Go", allItems: "All Items", addBtn: "+ Add", pref: "Quick Preferences", note: "Special Instructions", phNote: "e.g. Extra hot...", orderTitle: "Your Order", phName: "Your Name", phPhone: "Mobile Number", phCar: "Car Number (Optional)", cancel: "Cancel", confirm: "Confirm Order", myOrders: "My Orders", history: "History", phTrack: "Mobile Number", prep: "Preparing...", comp: "Completed", notifTit: "Notifications", navHome: "Home", navCart: "Cart", navAbout: "About", lblQr: "Cup And Go Full Menu", subQr: "Coffee, V60, matcha, hibiscus & desserts", readyTit: "Order Ready!", readySub: "Please collect your order at the counter.", aboutDesc: "Welcome to Cup And Go, where passion meets coffee. We serve the finest blends and freshly baked desserts tailored just for you.", succTit: "Order Received!", succMsg: "Your order was sent to the cashier. Waiting for confirmation.", lblEta: "Estimated Wait Time", lblMin: "Minutes", btnTrackNow: "Track Order", tagIce: "Extra Ice", tagHot: "Hot 🔥", tagCold: "Cold 🧊", addFinal: "Add to Cart - ", promoTit: "أهلاً وسهلاً بكم", promoDesc: "شكراً لزيارتكم كوب آند جو. استمتعوا بأجود أنواع القهوة والحلويات الطازجة المُعدّة خصيصاً لكم.", btnPromoCont: "متابعة", exploreMenu:"Explore Menu", tapCategory:"Choose a category", bestSeller:"BEST SELLER", popular:"POPULAR", skipIntro:"Skip Intro" },
+            ar: { shopName: "كوب آند جو", allItems: "الكل", addBtn: "+ إضافة", pref: "خيارات سريعة", note: "ملاحظات خاصة", phNote: "مثال: ساخن جداً...", orderTitle: "طلبك", phName: "الاسم", phPhone: "رقم الجوال", phCar: "رقم السيارة (اختياري)", cancel: "إلغاء", confirm: "تأكيد الطلب", myOrders: "طلباتي", history: "السجل", phTrack: "رقم الجوال", prep: "جاري التحضير...", comp: "مكتمل", notifTit: "الإشعارات", navHome: "الرئيسية", navCart: "السلة", navAbout: "حول", lblQr: "قائمة كوب آند جو الكاملة", subQr: "قهوة، V60، ماتشا، كركديه وحلويات", readyTit: "طلبك جاهز!", readySub: "يرجى استلام طلبك من الكاونتر.", aboutDesc: "مرحباً بك في كوب آند جو، حيث يلتقي الشغف بالقهوة. نقدم لك أفضل الخلطات والحلويات الطازجة المخبوزة خصيصاً لك.", succTit: "تم استلام الطلب!", succMsg: "جاري تحضير طلبك اللذيذ.", lblEta: "الوقت المقدر للانتظار", lblMin: "دقائق", btnTrackNow: "تتبع الطلب", tagIce: "زيادة ثلج", tagHot: "ساخن 🔥", tagCold: "بارد 🧊", addFinal: "أضف إلى السلة - ", promoTit: "أهلاً وسهلاً بكم", promoDesc: "شكراً لزيارتكم كوب آند جو. استمتعوا بأجود أنواع القهوة والحلويات الطازجة المُعدّة خصيصاً لكم.", btnPromoCont: "متابعة", exploreMenu:"عرض القائمة", tapCategory:"اختر القسم", bestSeller:"الأكثر طلباً", popular:"رائج", skipIntro:"تخطي المقدمة" }
         };
 
         function playBeep() { try { let ctx = new (window.AudioContext || window.webkitAudioContext)(); let osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = 800; osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.3); } catch(e) {} }
