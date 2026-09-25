@@ -3570,5 +3570,10 @@ button.item-img-wrap,.item-img-wrap{
   document.addEventListener('DOMContentLoaded',()=>{prepare();new MutationObserver(prepare).observe(document.body,{childList:true,subtree:true})});
 })();
 </script>
+<script id="cng-customer-image-cache-sw">
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('../sw.js').catch(()=>{})},{once:true});
+}
+</script>
 </body>
 </html>
