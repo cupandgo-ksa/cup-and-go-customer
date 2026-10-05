@@ -75,6 +75,7 @@
 <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
     
     <!-- QR Code Generator -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -1163,7 +1164,39 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
 
         const MY_QR_MENU_LINK = "https://cupandgoksa.com/menu/";
         const firebaseConfig = { apiKey: "AIzaSyAoYsT80oNc505TgobYwTv0T7YfUF_fWRs", authDomain: "cup-and-go-pos-e0ad1.firebaseapp.com", databaseURL: "https://cup-and-go-pos-e0ad1-default-rtdb.firebaseio.com", projectId: "cup-and-go-pos-e0ad1" };
-        firebase.initializeApp(firebaseConfig); const db = firebase.database();
+        firebase.initializeApp(firebaseConfig); const cngCustomerRawDb=firebase.database();
+let cngCustomerUid='';
+const cngCustomerReady=new Promise((resolve,reject)=>{
+  const stop=firebase.auth().onAuthStateChanged(async user=>{
+    if(user){cngCustomerUid=user.uid;stop();resolve(user);return;}
+    try{await firebase.auth().signInAnonymously();}catch(error){reject(error);}
+  });
+});
+cngCustomerReady.catch(()=>{if(typeof showToast==='function')showToast('Could not connect securely. Please reload.');});
+function cngCustomerOrderKey(order){return (order.ownerUid||cngCustomerUid)+'_'+String(order.id);}
+function cngCustomerRef(path){
+  let source=path||'/';
+  const privateOrder=['/customerOrders','/customerOrderHistory','/orders','/history'].includes(source);
+  const privateChat=source.startsWith('/customerChats/');
+  const privateNotification=source==='/myNotifications';
+  const needsAuth=privateOrder||privateChat||privateNotification;
+  const pending=[];
+  function actual(){
+    if(privateOrder)return cngCustomerRawDb.ref(source==='/customerOrders'?source:'/customerOrderHistory').orderByChild('ownerUid').equalTo(cngCustomerUid);
+    if(privateChat)return cngCustomerRawDb.ref('/customerChats/'+cngCustomerUid);
+    if(privateNotification)return cngCustomerRawDb.ref('/customerPrivateNotifications/'+cngCustomerUid);
+    return cngCustomerRawDb.ref(source);
+  }
+  function ready(){return needsAuth?cngCustomerReady:Promise.resolve();}
+  return {on(event,callback,error){const item={event,callback,active:true};pending.push(item);ready().then(()=>{if(item.active)actual().on(event,callback,error);},error);return callback;},
+    off(event,callback){pending.forEach(item=>{if((!event||item.event===event)&&(!callback||item.callback===callback))item.active=false;});if(!needsAuth||cngCustomerUid)actual().off(event,callback);},
+    once(...args){return ready().then(()=>actual().once(...args));},
+    child(name){return {push(value){return cngCustomerReady.then(()=>actual().child(name).push(value));}};},
+    update(value){return cngCustomerReady.then(()=>actual().update(value));}
+  };
+}
+const db={ref:cngCustomerRef};
+
 
         let menuProducts = []; let cart = []; let currentItem = null; let sheetQtyVal = 1; 
         if(!localStorage.getItem('cng_lang')) localStorage.setItem('cng_lang','ar');
@@ -1384,7 +1417,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         // FIREBASE
         // Admin notification listener starts after its state variable/function are initialized.
 
-        db.ref('/settings').on('value', snap => {
+        db.ref('/publicSettings').on('value', snap => {
             let s = snap.val();
             window.__latestCustomerSettings = s || {};
             if(s) {
@@ -1417,6 +1450,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
             return id;
         }
         function cngOrderBelongsToThisCustomer(o,phone){
+            if(o&&o.ownerUid)return o.ownerUid===cngCustomerUid;
             const deviceId=cngGetCustomerDeviceId();
             if(o&&o.customerDeviceId)return String(o.customerDeviceId)===String(deviceId);
             return !!(phone&&String(o?.customerPhone||'')===String(phone));
@@ -1425,7 +1459,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         let adminNotificationListenerStarted = false;
         function listenForAdminNotifications(){
             if(adminNotificationListenerStarted) return; adminNotificationListenerStarted=true;
-            db.ref('/customerNotifications').on('child_added', snap => {
+            const handleNotification = snap => {
                 const n=snap.val(); if(!n || n.active===false) return;
                 const myPhone=String(localStorage.getItem('cng_phone')||'').trim();
                 const targetPhone=String(n.targetPhone||'').trim();
@@ -1454,7 +1488,9 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
                     const area=document.getElementById('notifArea');
                     if(area){ const div=document.createElement('div'); div.style.cssText='padding:12px;border-bottom:1px dashed var(--glass-border-light);'; div.innerHTML=`<b>${n.title||''}</b><div style="margin-top:4px;">${n.message||''}</div><img src="${n.image}" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;margin-top:8px;">`; area.prepend(div); }
                 }
-            });
+            };
+            db.ref('/publicNotifications').on('child_added',handleNotification);
+            db.ref('/myNotifications').on('child_added',handleNotification);
         }
 
         // Safe to start now: adminNotificationListenerStarted has been initialized.
@@ -1639,14 +1675,10 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
             let btn = document.getElementById('btnPlaceOrder'); btn.innerText = "Processing..."; btn.disabled = true;
             let orderNote = (document.getElementById('checkoutOrderNote')?.value || '').trim();
             let total = cart.reduce((s, c) => s + (c.price * c.qty), 0); let cashierInfo = car ? `Car: ${car} (${name})` : `Walk-in: ${name}`; let tNow = Date.now();
-            let orderData = { id: tNow, time: new Date().toLocaleTimeString(), items: cart, total: total, cashier: cashierInfo, customerPhone: phone, customerPhoneMasked:cngMaskPhone(phone), customerDeviceId:cngGetCustomerDeviceId(), contactExpiresAt:tNow+(24*60*60*1000), privacyVersion:1, carNumber: car || "", timestamp: tNow, status: 'new', orderSource: 'customer', customerName: name, customerNote: orderNote, paymentMethod: paymentMethod };
+            await cngCustomerReady;
+            let orderData = { ownerUid:cngCustomerUid, id: tNow, time: new Date().toLocaleTimeString(), items: cart, total: total, cashier: cashierInfo, customerPhone: phone, customerPhoneMasked:cngMaskPhone(phone), customerDeviceId:cngGetCustomerDeviceId(), contactExpiresAt:tNow+(24*60*60*1000), privacyVersion:1, carNumber: car || "", timestamp: tNow, status: 'new', orderSource: 'customer', customerName: name, customerNote: orderNote, paymentMethod: paymentMethod };
             // Atomic realtime append: prevents simultaneous customer orders from overwriting each other.
-            db.ref('/customerOrders').transaction(current => {
-                let held = current || [];
-                if(!Array.isArray(held)) held = Object.values(held);
-                if(!held.some(o => String(o?.id) === String(orderData.id))) held.push(orderData);
-                return held;
-            }).then(result => {
+            cngCustomerRawDb.ref('/customerOrders/'+cngCustomerOrderKey(orderData)).set(orderData).then(()=>({committed:true})).then(result => {
                 if(!result.committed) throw new Error('Order was not committed');
                 window.cngLastPlacedOrder=orderData; localStorage.setItem('cng_last_order',JSON.stringify(orderData)); if(typeof cngUpdateWhatsAppConfirmButton==='function') cngUpdateWhatsAppConfirmButton();
                 cart = []; const noteBox=document.getElementById('checkoutOrderNote'); if(noteBox) noteBox.value=''; document.querySelectorAll('input[name="checkoutPaymentMethod"]').forEach(r=>r.checked=false); updateCartBadge(); btn.innerText = dict[isArabic?'ar':'en'].confirm; btn.disabled = false;
@@ -1675,19 +1707,16 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
         window.cancelMyOrder = async function(orderId) {
             let cmsg = isArabic ? "هل أنت متأكد من الإلغاء؟" : "Are you sure you want to cancel?";
             if(!(await appDialog(cmsg,{confirm:true,icon:"🧾"}))) return;
-            let cancelled=null;
-            db.ref('/customerOrders').transaction(current => {
-                let held = current || []; if(!Array.isArray(held)) held = Object.values(held);
-                const found=held.find(o=>String(o?.id)===String(orderId));
-                if(!found||!cngOrderBelongsToThisCustomer(found,localStorage.getItem('cng_phone'))||String(found.status||'new').toLowerCase()!=='new')return;
-                cancelled=found;return held.filter(o => String(o?.id) !== String(orderId));
-            }).then(async result => {
-                if(!result.committed||!cancelled)throw new Error('Not allowed');
-                const masked={...cancelled,status:'cancelled',cancelledAt:Date.now(),cancelReason:'Cancelled by customer',customerPhoneMasked:cancelled.customerPhoneMasked||cngMaskPhone(cancelled.customerPhone),privacyStatus:'contact_removed'};
+            try {
+                await cngCustomerReady;
+                const key=cngCustomerUid+'_'+String(orderId);
+                const cancelled=(await cngCustomerRawDb.ref('/customerOrders/'+key).once('value')).val();
+                if(!cancelled||cancelled.ownerUid!==cngCustomerUid||cancelled.status!=='new')throw new Error('Not allowed');
+                const masked={...cancelled,status:'cancelled',cancelledAt:Date.now(),cancelReason:'Cancelled by customer',customerPhoneMasked:cngMaskPhone(cancelled.customerPhone),privacyStatus:'contact_removed'};
                 delete masked.customerPhone;delete masked.carNumber;delete masked.cashier;
-                await db.ref('/customerOrderHistory').transaction(current=>{let h=current||[];if(!Array.isArray(h))h=Object.values(h);if(!h.some(o=>String(o?.id)===String(masked.id)))h.push(masked);return h;});
-                showToast(isArabic ? "تم الإلغاء" : "Cancelled!"); addNotification(isArabic ? "تم إلغاء الطلب" : "Order cancelled."); fetchOrderHistory();
-            }).catch(()=>showToast(isArabic?'تعذر إلغاء الطلب':'Could not cancel this order'));
+                await cngCustomerRawDb.ref('/').update({['customerOrders/'+key]:null,['customerOrderHistory/'+key]:masked});
+                showToast(isArabic?'تم الإلغاء':'Cancelled!');fetchOrderHistory();
+            } catch(error){showToast(isArabic?'تعذر إلغاء الطلب':'Could not cancel this order');}
         }
 
         function fetchOrderHistory() {
@@ -1803,7 +1832,7 @@ html.lang-ar .bottom-nav .nav-item span:last-child{direction:rtl!important;unico
             document.documentElement.dir = 'ltr'; document.documentElement.lang = isArabic ? 'ar' : 'en'; document.documentElement.classList.toggle('lang-ar', isArabic); document.getElementById('langBtn').innerText = isArabic ? 'English' : 'عربي';
             let t = dict[isArabic ? 'ar' : 'en'];
             if(isArabic) { document.getElementById('shopName').innerText = t.shopName; }
-            else { db.ref('/settings/shopName').once('value', s => { document.getElementById('shopName').innerText = s.val() || t.shopName; }); }
+            else { db.ref('/publicSettings/shopName').once('value', s => { document.getElementById('shopName').innerText = s.val() || t.shopName; }); }
             const setText=(id,v)=>{const e=document.getElementById(id);if(e)e.innerText=v}; const setPH=(id,v)=>{const e=document.getElementById(id);if(e)e.placeholder=v}; document.getElementById('lblPreferences') && (document.getElementById('lblPreferences').innerText=t.pref); document.getElementById('lblSpecialNote') && (document.getElementById('lblSpecialNote').innerText=t.note); setPH('sheetSpecialNote',t.phNote); if(document.getElementById('btnAddFinal')) document.getElementById('btnAddFinal').innerHTML = `${t.addFinal || (isArabic ? 'أضف إلى السلة - ' : 'Add to Cart - ')}<span id="sheetTotalPrice">${document.getElementById('sheetTotalPrice')?.innerText||'0.00'}</span> SR`; document.getElementById('lblYourOrder').innerText = t.orderTitle; document.getElementById('custName').placeholder = t.phName; document.getElementById('custPhone').placeholder = t.phPhone; document.getElementById('carNumber').placeholder = t.phCar; document.getElementById('btnPlaceOrder').innerText = t.confirm; document.getElementById('lblMyOrders').innerText = t.myOrders; document.getElementById('lblHistory').innerText = t.history; document.getElementById('trackPhone').placeholder = t.phTrack; document.getElementById('lblNotif').innerText = t.notifTit; document.getElementById('navHome').innerText = t.navHome; setText('navCart',t.navCart); document.getElementById('navAbout').innerText = t.navAbout; document.getElementById('lblQrTitle').innerText = t.lblQr; document.getElementById('lblQrSub').innerText = t.subQr; document.getElementById('aboutDesc').innerText = t.aboutDesc; document.getElementById('promoTitle').innerText = t.promoTit; document.getElementById('promoDesc').innerText = t.promoDesc; document.getElementById('succTitle').innerText = t.succTit; document.getElementById('succMsg').innerText = t.succMsg; document.getElementById('lblEta').innerText = t.lblEta; document.getElementById('lblMin').innerText = t.lblMin; document.getElementById('btnTrackNow').innerText = t.btnTrackNow; document.getElementById('btnPromoCont').innerText = t.btnPromoCont; setText('exploreMenuLabel',t.exploreMenu); setText('tapCategoryLabel',t.tapCategory); document.getElementById('launchSkipBtn').innerText=t.skipIntro;
             document.getElementById('tagIce').innerText = t.tagIce; document.getElementById('tagHot').innerText = t.tagHot; document.getElementById('tagCold').innerText = t.tagCold;
             
@@ -1896,7 +1925,7 @@ html.lang-ar .profile-page-wrap{text-align:right!important}html.lang-ar .profile
   const oldRender=window.renderNotifs || renderNotifs;
   renderNotifs=function(){let area=document.getElementById('notifArea');if(!area)return;if(myNotifications.length===0){area.innerHTML=`<div style="padding:28px 12px;text-align:center;color:#7d8595"><div style="font-size:28px;margin-bottom:8px">🔔</div><b style="display:block;color:#394150;margin-bottom:4px">${isArabic?'لا توجد إشعارات':'No notifications yet'}</b><small>${isArabic?'ستظهر عروض المتجر وتحديثات الطلب هنا':'Offers and order updates will appear here'}</small></div>`;return;}area.innerHTML='';myNotifications.forEach(n=>{area.innerHTML+=`<div style="padding:13px 4px;border-bottom:1px solid #eceef2"><div style="font-weight:750;color:#232a38;line-height:1.45">${n.text}</div><span style="font-size:9px;color:#949baa;margin-top:5px;display:block">${n.time}</span></div>`;n.read=true;});localStorage.setItem('cng_notifs',JSON.stringify(myNotifications));updateNotifBadge();};window.renderNotifs=renderNotifs;
   /* Firebase shop name should always fit; English is default, Arabic only when selected. */
-  db.ref('/settings/shopName').on('value',snap=>{if(!isArabic){const name=snap.val()||'Cup And Go';const a=document.getElementById('shopName');if(a)a.textContent=name;}});
+  db.ref('/publicSettings/shopName').on('value',snap=>{if(!isArabic){const name=snap.val()||'Cup And Go';const a=document.getElementById('shopName');if(a)a.textContent=name;}});
   setTimeout(()=>{applyTranslations();renderCustomerProfile();},50);
 })();
 </script>
@@ -2987,7 +3016,7 @@ html[dir="rtl"] #greetingMsg{
  function listen(){if(chatRef&&chatListener)chatRef.off('value',chatListener);var p=prof();if(!p.phone)return;chatRef=db.ref('/customerChats/'+key(p.phone));chatListener=function(s){var d=s.val()||{};render(d);badge(d.unreadCustomer||0);if(document.getElementById('cngCustomerChatModal').classList.contains('open')&&Number(d.unreadCustomer)>0)chatRef.update({unreadCustomer:0});};chatRef.on('value',chatListener);}
  window.cngOpenCustomerChat=function(){var p=prof(),setup=document.getElementById('cngChatSetup'),comp=document.getElementById('cngChatComposer');var logo=document.getElementById('shopLogo');if(logo)document.getElementById('cngChatShopLogo').src=logo.src;if(!p.phone){setup.style.display='block';comp.style.display='none';document.getElementById('cngChatName').value=p.name;}else{setup.style.display='none';comp.style.display='flex';listen();}openModal('cngCustomerChatModal');if(chatRef)chatRef.update({unreadCustomer:0});};
  window.cngSaveChatProfile=function(){var n=document.getElementById('cngChatName').value.trim(),p=document.getElementById('cngChatPhone').value.trim();if(!n||!p){if(typeof showToast==='function')showToast('Name and mobile number required');return;}localStorage.setItem('cng_name',n);localStorage.setItem('cng_phone',p);document.getElementById('cngChatSetup').style.display='none';document.getElementById('cngChatComposer').style.display='flex';listen();};
- window.cngCustomerSendMessage=function(){var p=prof(),i=document.getElementById('cngChatInput'),m=(i.value||'').trim();if(!p.phone){cngOpenCustomerChat();return;}if(!m)return;i.value='';var r=db.ref('/customerChats/'+key(p.phone)),now=Date.now();r.child('messages').push({sender:'customer',text:m,timestamp:now});r.transaction(function(d){d=d||{};d.customerName=p.name||'Customer';d.customerPhone=p.phone;d.updatedAt=now;d.lastMessage=m;d.lastSender='customer';d.unreadAdmin=(Number(d.unreadAdmin)||0)+1;d.unreadCustomer=0;return d;});};
+ window.cngCustomerSendMessage=function(){var p=prof(),i=document.getElementById('cngChatInput'),m=(i.value||'').trim();if(!p.phone){cngOpenCustomerChat();return;}if(!m)return;i.value='';var r=db.ref('/customerChats/'+key(p.phone)),now=Date.now();r.child('messages').push({sender:'customer',text:m,timestamp:now});r.update({customerName:p.name||'Customer',customerPhone:p.phone,updatedAt:now,lastMessage:m,lastSender:'customer',unreadAdmin:firebase.database.ServerValue.increment(1),unreadCustomer:0});};
  document.addEventListener('DOMContentLoaded',function(){if(prof().phone)listen();});setTimeout(function(){if(prof().phone)listen();},800);
 })();
 </script>
@@ -3577,3 +3606,4 @@ if('serviceWorker' in navigator && location.protocol==='https:'){
 </script>
 </body>
 </html>
+
